@@ -8,12 +8,13 @@ from .mock_data import buscar_por_ruc
 from .adapters import normalizar_datos_empresa, construir_ubicacion_completa, normalizar_lista_avisos
 
 
-def buscar_empresa(query: str) -> Optional[Dict]:
+def buscar_empresa(query: str, tipo_busqueda: str = 'todos') -> Optional[Dict]:
     """
-    Busca una empresa por RUC o número de aviso.
+    Busca una empresa por RUC, cédula, razón social, nombre o número de aviso.
     
     Args:
-        query: RUC o número de aviso a buscar
+        query: Término a buscar
+        tipo_busqueda: 'ruc', 'cedula', 'razon_social', 'nombre', 'aviso' o 'todos'
     
     Returns:
         Diccionario con 'detalle' y 'avisos' o None si no se encuentra
@@ -21,7 +22,7 @@ def buscar_empresa(query: str) -> Optional[Dict]:
     $Reusable$
     """
     # Por ahora usamos mock data
-    resultado = buscar_por_ruc(query)
+    resultado = buscar_por_ruc(query, tipo_busqueda)
     
     if resultado:
         # Normalizar datos usando adapters

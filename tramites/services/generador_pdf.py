@@ -93,7 +93,7 @@ def generar_pdf_tramite(tramite):
     
     # Determinar qué plantilla usar
     if tramite.tipo_documento == 'CERTIFICADO':
-        template_name = 'tramites/pdf/certificado_oficial.html'
+        template_name = 'tramites/pdf/oficio_oficial.html'
         
         # Generar código QR para certificados oficiales
         # URL de validación (en producción sería una URL pública)

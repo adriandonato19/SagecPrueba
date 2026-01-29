@@ -23,11 +23,12 @@ def api_search_view(request):
     Devuelve fragmento HTML con tabla de avisos.
     """
     query = request.GET.get('q', '').strip() or request.POST.get('q', '').strip()
+    tipo_busqueda = request.GET.get('tipo', 'todos').strip() or request.POST.get('tipo', 'todos').strip()
     
     if not query:
         return render(request, 'integracion/resultados_vacios.html')
     
-    resultado = buscar_empresa(query)
+    resultado = buscar_empresa(query, tipo_busqueda)
     
     # Registrar evento de consulta
     ip_cliente = obtener_ip_cliente(request)
@@ -35,8 +36,8 @@ def api_search_view(request):
         tipo_evento=BitacoraEvento.CONSULTA_API,
         actor=request.user,
         ip_origen=ip_cliente,
-        descripcion=f'Consulta de empresa por RUC: {query}',
-        metadata={'query': query, 'encontrado': resultado is not None}
+        descripcion=f'Consulta de empresa por {tipo_busqueda}: {query}',
+        metadata={'query': query, 'tipo_busqueda': tipo_busqueda, 'encontrado': resultado is not None}
     )
     
     if not resultado:

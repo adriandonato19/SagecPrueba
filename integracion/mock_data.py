@@ -237,24 +237,60 @@ MOCK_EMPRESAS_API = [
   }
 ]
 
-def buscar_por_ruc(query):
+def buscar_por_ruc(query, tipo_busqueda='todos'):
     """
-    Busca datos de empresa por RUC o Aviso de Operación (mock).
+    Busca datos de empresa por RUC, cédula, razón social, nombre o Aviso de Operación (mock).
     
     Args:
-        query: RUC o Aviso a buscar
+        query: Término a buscar
+        tipo_busqueda: 'ruc', 'cedula', 'razon_social', 'nombre', 'aviso' o 'todos'
     
     Returns:
         dict con 'detalle' y 'avisos' o None si no se encuentra
     """
     query_clean = query.replace('-', '').replace(' ', '').strip().upper()
+    query_palabras = query.strip().upper()
     
     resultados = []
     for empresa in MOCK_EMPRESAS_API:
         ruc_clean = str(empresa['ruc']).replace('-', '').replace(' ', '').upper()
         aviso_clean = str(empresa['aviso_operacion']).replace('-', '').replace(' ', '').upper()
+        razon_social = str(empresa.get('razon_social', '')).upper()
+        razon_comercial = str(empresa.get('razon_comercial', '')).upper()
+        representante = str(empresa.get('representante_legal', '')).upper()
         
-        if query_clean in ruc_clean or query_clean in aviso_clean:
+        encontrado = False
+        
+        if tipo_busqueda == 'ruc':
+            # Buscar solo por RUC
+            if query_clean in ruc_clean:
+                encontrado = True
+        elif tipo_busqueda == 'cedula':
+            # Buscar por cédula (formato X-XXX-XXXX presente en el RUC)
+            if query_clean in ruc_clean:
+                encontrado = True
+        elif tipo_busqueda == 'razon_social':
+            # Buscar por razón social o comercial (búsqueda parcial)
+            if query_palabras in razon_social or query_palabras in razon_comercial:
+                encontrado = True
+        elif tipo_busqueda == 'nombre':
+            # Buscar por nombre del representante legal (búsqueda parcial)
+            if query_palabras in representante:
+                encontrado = True
+        elif tipo_busqueda == 'aviso':
+            # Buscar solo por número de aviso
+            if query_clean in aviso_clean:
+                encontrado = True
+        else:
+            # Buscar en todos los campos (default)
+            if (query_clean in ruc_clean or 
+                query_clean in aviso_clean or 
+                query_palabras in razon_social or 
+                query_palabras in razon_comercial or
+                query_palabras in representante):
+                encontrado = True
+        
+        if encontrado:
             resultados.append(empresa)
     
     if not resultados:

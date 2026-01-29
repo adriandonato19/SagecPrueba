@@ -207,7 +207,7 @@ def mis_oficios_view(request):
     """Lista de oficios del usuario actual."""
     oficios = Tramite.objects.filter(
         solicitante=request.user,
-        tipo_documento='OFICIO'
+        tipo_documento__in=['OFICIO', 'CERTIFICADO']
     ).order_by('-fecha_creacion')
     
     return render(request, 'tramites/mis_oficios.html', {
