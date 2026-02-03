@@ -9,14 +9,7 @@ from typing import Dict, List, Optional
 def normalizar_datos_empresa(datos_api: Dict) -> Dict:
     """
     Normaliza los datos de la API de Panamá Emprende a formato interno.
-    
-    Args:
-        datos_api: Diccionario con datos crudos de la API
-    
-    Returns:
-        Diccionario normalizado con estructura estándar
-    
-    $Reusable$
+    Soporta formato Mock antiguo y API Real nueva.
     """
     # Manejar el RUC que ya puede venir con guiones o separado del DV
     ruc_raw = str(datos_api.get('ruc', ''))
@@ -27,15 +20,29 @@ def normalizar_datos_empresa(datos_api: Dict) -> Dict:
     else:
         ruc_completo = ruc_raw
 
+    # Campos compatibles con ambas versiones (Mock y Real)
+    razon_social = (datos_api.get('razon_social') or 
+                    datos_api.get('razon_social_juridica') or 
+                    datos_api.get('razon_social_natural') or '')
+                    
+    razon_comercial = datos_api.get('razon_comercial') or datos_api.get('nombreComercial', '')
+    
+    numero_aviso = datos_api.get('aviso_operacion') or datos_api.get('numero_aviso', '')
+    
+    estatus = datos_api.get('estado_sucursal') or datos_api.get('estado', '')
+    
+    capital = datos_api.get('capital_invertido') or datos_api.get('monto_estimado', 0.00)
+
     return {
         'ruc': ruc_raw,
         'dv': dv,
         'ruc_completo': ruc_completo,
-        'razon_social': datos_api.get('razon_social', ''),
-        'razon_comercial': datos_api.get('razon_comercial', ''),
-        'numero_aviso': datos_api.get('aviso_operacion', ''),
+        'razon_social': razon_social,
+        'razon_comercial': razon_comercial,
+        'numero_aviso': numero_aviso,
         'numero_licencia': datos_api.get('numero_licencia', ''),
         'representante_legal': datos_api.get('representante_legal', ''),
+        'cedula_representante': datos_api.get('cedula_representante', ''), # Nuevo
         'fecha_inicio_operaciones': datos_api.get('fecha_inicio_operaciones', ''),
         'provincia': datos_api.get('provincia', ''),
         'distrito': datos_api.get('distrito', ''),
@@ -47,23 +54,16 @@ def normalizar_datos_empresa(datos_api: Dict) -> Dict:
         'apartamento': datos_api.get('apartamento', ''),
         'actividad_comercial': datos_api.get('actividad_comercial', ''),
         'actividades_comerciales_ciiu': datos_api.get('ciiu', ''),
-        'capital_invertido': f"{datos_api.get('capital_invertido', 0.00):.2f}",
-        'estatus': datos_api.get('estado_sucursal', ''),
-        'sucursal': datos_api.get('sucursal', '000'), # Nuevo campo sucursal
+        'capital_invertido': f"{float(capital):.2f}",
+        'estatus': estatus,
+        'sucursal': datos_api.get('sucursal', '000'),
+        'tipo_apireal': True if 'nombreComercial' in datos_api else False # Flag interno
     }
 
 
 def construir_ubicacion_completa(datos: Dict) -> str:
     """
     Construye la dirección completa concatenando campos de ubicación.
-    
-    Args:
-        datos: Diccionario con datos de empresa
-    
-    Returns:
-        String con la dirección completa formateada
-    
-    $Reusable$
     """
     partes = []
     
@@ -74,15 +74,15 @@ def construir_ubicacion_completa(datos: Dict) -> str:
     if datos.get('corregimiento'):
         partes.append(datos['corregimiento'])
     if datos.get('urbanizacion'):
-        partes.append(datos['urbanizacion'])
+        partes.append(f"Urb. {datos['urbanizacion']}")
     if datos.get('calle'):
-        partes.append(datos['calle'])
+        partes.append(f"Calle {datos['calle']}")
     if datos.get('casa'):
         partes.append(f"Casa {datos['casa']}")
     if datos.get('edificio'):
-        partes.append(datos['edificio'])
+        partes.append(f"Edif. {datos['edificio']}")
     if datos.get('apartamento'):
-        partes.append(datos['apartamento'])
+        partes.append(f"Apto. {datos['apartamento']}")
     
     return ', '.join(filter(None, partes)) if partes else 'No especificada'
 
@@ -90,24 +90,12 @@ def construir_ubicacion_completa(datos: Dict) -> str:
 def normalizar_lista_avisos(avisos_api: List[Dict]) -> List[Dict]:
     """
     Normaliza una lista de avisos de operación.
-    
-    Args:
-        avisos_api: Lista de diccionarios con datos de avisos
-    
-    Returns:
-        Lista normalizada de avisos
-    
-    $Reusable$
     """
-    return [
-        {
-            'numero_aviso': aviso.get('aviso_operacion', ''),
-            'sucursal': aviso.get('sucursal', '000'), # Usar el campo sucursal del JSON
-            'razon_comercial': aviso.get('razon_comercial', ''),
-            'razon_social': aviso.get('razon_social', ''),
-            'estatus': aviso.get('estado_sucursal', ''),
-            'fecha_inicio': aviso.get('fecha_inicio_operaciones', ''),
-            'ruc_completo': f"{aviso.get('ruc', '')}-{aviso.get('dv', '')}" if aviso.get('dv') else aviso.get('ruc', ''),
-        }
-        for aviso in avisos_api
-    ]
+    normalized = []
+    for aviso in avisos_api:
+        # Reutilizamos la lógica principal para cada item
+        item = normalizar_datos_empresa(aviso)
+        # Campos extra específicos para lista
+        item['fecha_inicio'] = item['fecha_inicio_operaciones']
+        normalized.append(item)
+    return normalized

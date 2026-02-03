@@ -13,7 +13,7 @@ from .models import Tramite
 from .services.generador_pdf import generar_pdf_tramite, calcular_hash_pdf
 from identidad.decorators import require_rol
 from identidad.models import UsuarioMICI
-from integracion.services import buscar_empresa
+from integracion.services import buscar_empresa, log_debug
 from auditoria.services import registrar_evento, obtener_ip_cliente
 from auditoria.models import BitacoraEvento
 
@@ -88,6 +88,23 @@ def bandeja_admin_view(request):
 @require_http_methods(["GET", "POST"])
 def crear_tramite_view(request):
     """Crear un nuevo trámite desde la búsqueda de empresa."""
+    
+    # === LOGGING DIAGNÓSTICO ===
+    log_debug("="*60)
+    log_debug(f"DEBUG: crear_tramite_view METHOD={request.method}")
+    log_debug(f"DEBUG: GET params: {request.GET}")
+    
+    # Recuperar datos de sesión para diagnóstico
+    avisos_session = request.session.get('avisos_busqueda', [])
+    log_debug(f"DEBUG: Sesión contiene {len(avisos_session)} avisos.")
+    if avisos_session:
+        primer_aviso = avisos_session[0]
+        log_debug(f"DEBUG: Primer aviso en sesión: {primer_aviso.get('razon_social')} RUC: {primer_aviso.get('ruc')}")
+    else:
+        log_debug("DEBUG: SESIÓN VACÍA o NO EXISTE 'avisos_busqueda'")
+    log_debug("="*60)
+    # ==========================
+
     if request.method == 'POST':
         ruc_full = request.POST.get('ruc', '').strip()
         # Limpiar el RUC si trae sucursal para la búsqueda técnica
@@ -111,9 +128,40 @@ def crear_tramite_view(request):
                 messages.error(request, 'El propósito es obligatorio para certificados.')
                 return redirect('tramites:crear')
         
-        # Buscar datos de la empresa
-        resultado = buscar_empresa(ruc)
+        # PRIMERO: Intentar usar los datos de la sesión
+        numero_aviso_seleccionado = request.POST.get('aviso', '').strip() or request.GET.get('aviso', '').strip()
+        
+        resultado = None
+        
+        if avisos_session and numero_aviso_seleccionado:
+            log_debug(f"DEBUG POST: Buscando aviso {numero_aviso_seleccionado} en sesión...")
+            # Buscar el aviso específico en los datos de la sesión
+            for aviso in avisos_session:
+                if str(aviso.get('numero_aviso')) == str(numero_aviso_seleccionado):
+                    # Encontrar todos los avisos que pertenezcan al mismo RUC (para incluir sucursales)
+                    ruc_obj = aviso.get('ruc')
+                    avisos_relacionados = [a for a in avisos_session if a.get('ruc') == ruc_obj]
+                    
+                    resultado = {
+                        'detalle': aviso,
+                        'avisos': avisos_relacionados if avisos_relacionados else [aviso]
+                    }
+                    log_debug(f"DEBUG POST: ENCONTRADO en sesión! {len(resultado['avisos'])} avisos vinculados.")
+                    break
+        else:
+            log_debug("DEBUG POST: No se buscó en sesión (falta session o aviso id)")
+       
+        # Si no encontramos en sesión, NO hacer búsqueda normal (fallback) para evitar datos erróneos
         if not resultado:
+            log_debug("DEBUG POST: No encontrado en sesión. Fallback DESHABILITADO para prevenir Jaime Lee Chen.")
+            # log_debug(f"DEBUG POST: Fallback API por RUC: {ruc}")
+            # resultado = buscar_empresa(ruc)
+            # ...
+            messages.error(request, 'La sesión de búsqueda ha expirado o el aviso no coincide. Por favor busque la empresa nuevamente.')
+            return redirect('integracion:buscador')
+        
+        if not resultado:
+            log_debug("DEBUG POST: No se encontró resultado final.")
             messages.error(request, 'No se encontró información para el RUC proporcionado.')
             return redirect('integracion:buscador')
         
@@ -126,11 +174,15 @@ def crear_tramite_view(request):
             except ValueError:
                 pass
         
+        # Preparar snapshot con avisos
+        snapshot = resultado['detalle'].copy()
+        snapshot['avisos_relacionados'] = resultado['avisos']
+        
         # Crear trámite
         tramite = Tramite.objects.create(
             tipo_documento=tipo_documento,
             solicitante=request.user,
-            empresa_snapshot=resultado['detalle'],
+            empresa_snapshot=snapshot,
             origen_consulta=ruc,
             numero_referencia=f"{tipo_documento[:3]}-{timezone.now().strftime('%Y%m%d')}-{Tramite.objects.count() + 1}",
             estado=Tramite.BORRADOR,
@@ -161,6 +213,7 @@ def crear_tramite_view(request):
             
         except Exception as e:
             # Si falla la generación del PDF, continuar pero registrar el error
+            print(f"ERROR PDF: {e}")
             messages.warning(request, f'Trámite creado pero hubo un problema al generar el PDF: {str(e)}')
         
         # Registrar evento de creación (el signal también lo registrará, pero aquí tenemos más contexto)
@@ -178,14 +231,47 @@ def crear_tramite_view(request):
         return redirect('tramites:detalle', id=tramite.uuid)
     
     # GET: mostrar formulario de creación
+    # -----------------------------------
     ruc = request.GET.get('crear_tramite', '')
-    resultado = None
-    if ruc:
-        resultado = buscar_empresa(ruc)
+    aviso_id = request.GET.get('aviso', '')
     
+    empresa_detalle = None
+    source = "NONE"
+    
+    # 1. Intentar buscar en sesión por ID de aviso (Prioridad Máxima)
+    if aviso_id and avisos_session:
+        log_debug(f"DEBUG GET: Buscando aviso_id='{aviso_id}' en sesión...")
+        for av in avisos_session:
+             # log_debug(f"DEBUG GET: Comparando con {av.get('numero_aviso')}")
+             if str(av.get('numero_aviso')) == str(aviso_id):
+                 empresa_detalle = av
+                 source = "SESSION"
+                 log_debug(f"DEBUG GET: MATCH en sesión! {av.get('razon_social')}")
+                 break
+    
+    # 2. Fallback: buscar por RUC en API si no estaba en sesión
+    if not empresa_detalle and ruc:
+        log_debug(f"DEBUG GET: Fallback API busqueda por RUC '{ruc}'...")
+        res = buscar_empresa(ruc)
+        if res:
+             if aviso_id:
+                 # Intentar encontrar el aviso específico
+                 empresa_detalle = next((a for a in res['avisos'] if str(a.get('numero_aviso')) == str(aviso_id)), res['detalle'])
+                 source = "API_RUC_FILTER"
+             else:
+                 empresa_detalle = res['detalle']
+                 source = "API_RUC_DEFAULT"
+        log_debug(f"DEBUG GET: Resultado API Source={source}")
+
+    if empresa_detalle:
+        log_debug(f"DEBUG GET: Empresa Final: {empresa_detalle.get('razon_social')} (Aviso: {empresa_detalle.get('numero_aviso')})")
+    else:
+        log_debug("DEBUG GET: Empresa Final es NONE")
+
     return render(request, 'tramites/crear.html', {
         'ruc': ruc,
-        'empresa': resultado['detalle'] if resultado else None,
+        'aviso': aviso_id,
+        'empresa': empresa_detalle,
     })
 
 

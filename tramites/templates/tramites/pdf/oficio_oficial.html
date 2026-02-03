@@ -322,6 +322,13 @@
             <img src="{{ footer_path }}" class="footer-img" alt="Footer Institucional">
         </div>
     </div>
+
+    {% if avisos %}
+    <!-- Generar una página de Aviso de Operación por cada empresa/sucursal relacionada -->
+    {% for aviso in avisos %}
+    {% include 'tramites/pdf/anexo_aviso.html' with aviso=aviso qr_code_data=qr_code_data %}
+    {% endfor %}
+    {% endif %}
 </body>
 
 </html>

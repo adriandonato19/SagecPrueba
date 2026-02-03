@@ -45,6 +45,11 @@ def api_search_view(request):
             'query': query
         })
     
+    # Guardar los avisos en la sesión para poderlos recuperar al crear trámite
+    # Esto evita tener que hacer otra búsqueda que podría dar resultados diferentes
+    request.session['avisos_busqueda'] = resultado['avisos']
+    request.session['detalle_busqueda'] = resultado['detalle']
+    
     return render(request, 'integracion/resultados_empresa.html', {
         'empresa': resultado['detalle'],
         'avisos': resultado['avisos'],
@@ -56,14 +61,16 @@ def api_search_view(request):
 def detalle_empresa_hx(request, aviso):
     """
     Devuelve el contenido del modal para una empresa específica por aviso.
+    Busca primero en la sesión del usuario.
     """
-    empresa_raw = next((e for e in MOCK_EMPRESAS_API if e['aviso_operacion'] == aviso), None)
+    # Buscar en sesión (ya están normalizados)
+    avisos_session = request.session.get('avisos_busqueda', [])
+    empresa = next((e for e in avisos_session if str(e.get('numero_aviso')) == str(aviso)), None)
     
-    if not empresa_raw:
+    if not empresa:
         raise Http404("Empresa no encontrada")
         
-    empresa = normalizar_datos_empresa(empresa_raw)
-    empresa['ubicacion_completa'] = construir_ubicacion_completa(empresa)
+    # Nota: Los datos en sesión ya vienen normalizados por el adaptador en la búsqueda
     
     return render(request, 'integracion/partials/modal_detalle.html', {
         'empresa': empresa

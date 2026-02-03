@@ -1,0 +1,268 @@
+<div
+    style="break-before: page; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; line-height: 1.4; color: #333; background-color: #fff; position: relative;">
+    <style>
+        .aviso-container {
+            background-color: white;
+            width: 100%;
+        }
+
+        /* ========== HEADER ========== */
+        .aviso-header {
+            background-color: #004494;
+            /* Fallback */
+            color: white;
+            text-align: center;
+            padding: 12px 30px;
+            border-bottom: 2px solid #003366;
+        }
+
+        .aviso-title-bar {
+            background: #004494;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-top: 2px;
+        }
+
+        .aviso-title {
+            font-size: 18pt;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* ========== SUB-HEADER ========== */
+        .aviso-sub-header {
+            background: white;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .aviso-qr-placeholder {
+            width: 70px;
+            height: 70px;
+            border: 1px solid #ccc;
+            text-align: center;
+            line-height: 70px;
+            font-size: 8pt;
+            color: #999;
+        }
+
+        .aviso-republica-bold {
+            font-weight: bold;
+            font-size: 12pt;
+            margin: 0;
+            text-align: center;
+        }
+
+        .aviso-republica-sub {
+            font-size: 10pt;
+            color: #374151;
+            margin: 0;
+            text-align: center;
+        }
+
+        /* ========== INFO CARDS ========== */
+        .aviso-card {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .aviso-card-header {
+            background: #0056b3;
+            color: white;
+            padding: 8px 15px;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        .aviso-card-body {
+            background: #f9fafb;
+            padding: 12px 15px;
+        }
+
+        .aviso-card-number {
+            font-weight: bold;
+            font-size: 12pt;
+            margin-top: 0;
+        }
+
+        .aviso-card-name {
+            font-weight: bold;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 9pt;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .aviso-content-box {
+            border: 2px solid #9ca3af;
+            border-radius: 10px;
+            padding: 20px;
+            background: white;
+            margin: 20px 30px;
+        }
+
+        .aviso-business-name {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 5px;
+        }
+
+        .aviso-business-name h2 {
+            font-size: 20pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .aviso-clause-box {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            font-size: 8pt;
+            color: #4b5563;
+            text-align: justify;
+        }
+
+        table.layout-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+        }
+
+        table.layout-table td {
+            vertical-align: top;
+            width: 50%;
+        }
+    </style>
+
+    <div class="aviso-container">
+        <!-- HEADER -->
+        <div class="aviso-header">
+            <!-- Asumimos que el logo está disponible o usamos texto -->
+            <div style="font-size: 14pt; font-weight: bold;">GOBIERNO NACIONAL</div>
+            <div style="font-size: 10pt;">MINISTERIO DE COMERCIO E INDUSTRIAS</div>
+        </div>
+
+        <div class="aviso-title-bar">
+            <div class="aviso-title">AVISO DE OPERACIÓN</div>
+        </div>
+
+        <!-- SUB-HEADER -->
+        <div class="aviso-sub-header">
+            <table style="width: 100%;">
+                <tr>
+                    <td style="width: 20%;">
+                        {% if qr_code_data %}
+                        <img src="{{ qr_code_data }}" style="width: 70px; height: 70px;">
+                        {% else %}
+                        <div class="aviso-qr-placeholder">[QR]</div>
+                        {% endif %}
+                    </td>
+                    <td style="width: 80%; text-align: center;">
+                        <p class="aviso-republica-bold">REPÚBLICA DE PANAMÁ</p>
+                        <p class="aviso-republica-bold">MINISTERIO DE COMERCIO E INDUSTRIAS</p>
+                        <p class="aviso-republica-sub">DIRECCIÓN GENERAL DE COMERCIO INTERIOR</p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- INFO CARDS -->
+        <div style="padding: 20px 30px;">
+            <table class="layout-table">
+                <tr>
+                    <td>
+                        <div class="aviso-card">
+                            <div class="aviso-card-header">Aviso de Operación Nº</div>
+                            <div class="aviso-card-body">
+                                <p class="aviso-card-number">{{ aviso.numero_aviso }}</p>
+                                <p class="aviso-card-name">{{ aviso.representante_legal }}</p>
+                                <p style="font-size: 9pt; margin-top: 5px;">Capital Invertido B/. {{
+                                    aviso.capital_invertido }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="aviso-card">
+                            <div class="aviso-card-header">Expedido a favor de</div>
+                            <div class="aviso-card-body">
+                                <p class="aviso-card-number">{{ aviso.representante_legal }}</p>
+                                <p class="aviso-card-name">{{ aviso.cedula_representante }}</p>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="aviso-content-box">
+            <div class="aviso-business-name">
+                <h2>{{ aviso.razon_comercial }}</h2>
+            </div>
+
+            <p style="text-align: justify; margin-bottom: 10px;">
+                Yo, <b>{{ aviso.representante_legal }}</b>, con cédula personal <b>{{ aviso.cedula_representante }}</b>,
+                nacionalidad Panameño, con domicilio en Provincia de {{ aviso.provincia }}, Distrito de {{
+                aviso.distrito }},
+                Corregimiento {{ aviso.corregimiento }}.
+            </p>
+
+            <p style="text-align: justify; margin-bottom: 10px;">
+                <b>Declaro lo siguiente:</b><br />
+                El establecimiento denominado <b>{{ aviso.razon_comercial }}</b> está ubicado en:
+                {{ aviso.ubicacion_completa|default:"Dirección según registro" }}.<br />
+                Inicio de operaciones: <b>{{ aviso.fecha_inicio_operaciones }}</b>
+            </p>
+
+            <div style="margin-bottom: 15px;">
+                <p><b>Se dedicará a las actividades de:</b></p>
+                <p style="text-align: justify;">{{ aviso.actividad_comercial }} (CIIU: {{
+                    aviso.actividades_comerciales_ciiu }})</p>
+            </div>
+
+            <div class="aviso-clause-box">
+                <b>Cláusula de Responsabilidad:</b> En caso de que este Aviso de Operación haya sido procesado por una
+                persona distinta al Representante Legal...
+                Declaro bajo la gravedad de juramento que toda la información es cierta.
+            </div>
+
+            <div class="aviso-clause-box">
+                Este Aviso de Operación debe mantenerse en el establecimiento y mostrarlo en caso de ser solicitado por
+                las autoridades.
+            </div>
+
+            <p style="font-size: 8pt; font-style: italic; color: #666;">
+                Fundamento legal: Ley 5 de 2007 y Ley 2 de 2011.
+            </p>
+        </div>
+
+        <!-- SIGNATURES -->
+        <div style="padding: 10px 30px;">
+            <table class="layout-table">
+                <tr>
+                    <td style="text-align: center;">
+                        <div style="border-top: 1px solid black; width: 80%; margin: 0 auto; padding-top: 5px;">
+                            <p style="font-weight: bold; font-size: 9pt;">{{ aviso.representante_legal }}</p>
+                            <p style="font-size: 8pt;">C.I.P. {{ aviso.cedula_representante }}</p>
+                            <p style="font-weight: bold; font-size: 8pt;">Firma del Declarante</p>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="border-top: 1px solid black; width: 80%; margin: 0 auto; padding-top: 5px;">
+                            <p style="font-weight: bold; font-size: 9pt;">{{ aviso.representante_legal }}</p>
+                            <p style="font-size: 8pt;">C.I.P. {{ aviso.cedula_representante }}</p>
+                            <p style="font-weight: bold; font-size: 8pt;">Firma del Dueño</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>

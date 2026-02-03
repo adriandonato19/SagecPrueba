@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Aviso de Operación - Replica</title>
+    <!-- Tailwind CSS v3 via CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gov-blue': '#0056b3',
+                        'gov-dark-blue': '#004494',
+                        'star-red': '#D32F2F',
+                    },
+                    fontSize: {
+                        'xxs': '0.6rem',
+                        'xs': '0.7rem',
+                        'sm': '0.8rem',
+                        'base': '0.9rem',
+                        'lg': '1rem',
+                        'xl': '1.1rem',
+                        '2xl': '1.25rem',
+                        '3xl': '1.5rem',
+                        '4xl': '1.8rem',
+                    },
+                    spacing: {
+                        '0.5': '0.125rem',
+                        '1': '0.2rem',
+                        '1.5': '0.3rem',
+                        '2': '0.4rem',
+                        '3': '0.6rem',
+                        '4': '0.8rem',
+                    }
+                }
+            }
+        }
+    </script>
+    <style data-purpose="layout-extras">
+        body {
+            background-color: white;
+            margin: 0;
+            padding: 0;
+            color: #333333;
+            font-family: Arial, Helvetica, sans-serif;
+            /* Height removed to allow natural flow as requested by "smaller page" */
+        }
+
+        /* Watermark Styling */
+        .watermark-container {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .watermark-star {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30rem;
+            color: rgba(0, 0, 0, 0.05);
+            z-index: -1;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Typography spacing */
+        p {
+            line-height: 1.3 !important;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Print media query optimizations */
+        @media print {
+            @page {
+                margin: 0.3in;
+                /* Balanced margins */
+                size: letter;
+            }
+
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+                width: 100%;
+            }
+
+            .document-container {
+                width: 100%;
+                max-width: 100%;
+                box-shadow: none;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Main Document Container -->
+    <main class="document-container flex flex-col w-full">
+
+        <!-- Main Header -->
+        <header
+            class="text-white py-3 relative border-b border-blue-800 bg-gradient-to-b from-gov-dark-blue to-gov-blue px-6">
+            <div class="flex flex-col items-center justify-center space-y-0.5">
+                <div class="mb-1">
+                    <img alt="Escudo Nacional"
+                        class="h-14 w-14 rounded-full border-2 border-white object-contain bg-white"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI2HXk0m2xbNl20flnzVMXn4dtRQLqdNlFRw1XEKMTHtFxgn3x95EeDRf_GPeCHDgRYIcTzV-zBrHirfe7yVnOaEL_lf5npAKWknpy2TCLzAnlUF_jFkHgE1u5hg_gv5h3qHBi5cFO8WubQXHSkQfOckk--vM35tXg03ok6hRGpo1wmQ4hfbSufUHOT43lxe9iP-I_LdUHvsv2uFRoRaw9GtDZ1jFZJ_00oN6-8CP6A6OKKC2Q6gQC-vjeyS3NyV7E-Sgyhcb5uMY" />
+                </div>
+                <h1 class="text-lg font-bold tracking-wider text-center">GOBIERNO NACIONAL</h1>
+                <div class="text-xs font-semibold tracking-wide text-center">
+                    <span class="text-red-600 text-sm align-middle">★</span>
+                    <span class="mx-1">CON PASO FIRME</span>
+                    <span class="text-red-600 text-sm align-middle">★</span>
+                </div>
+                <h2 class="font-bold text-sm mt-0.5 text-center">MINISTERIO DE COMERCIO E INDUSTRIAS</h2>
+                <p class="text-[10px] italic opacity-90 text-center">Panamá Emprende</p>
+            </div>
+        </header>
+
+        <!-- Title Bar -->
+        <div class="bg-gov-dark-blue text-white py-1.5 text-center w-full">
+            <h3 class="text-xl font-bold tracking-wide">AVISO DE OPERACIÓN</h3>
+        </div>
+
+        <!-- Sub-Header Info - FIXED CENTERING -->
+        <!-- We use a grid or width-based layout to ensure the CENTER text is truly centered on page, ignoring QR width -->
+        <section class="bg-white py-3 flex items-center border-b border-gray-200 px-6 relative h-28">
+            <!-- QR Code: Absolute positioned or flex-item -->
+            <div class="absolute left-6 top-1/2 transform -translate-y-1/2">
+                <img alt="QR Code" class="h-24 w-24"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxwZCjHizKHOBDvmbo1A5OjVnXSBe8TZlIO-KviVNJOqxN1gonh9ZPWpumnGBj_AdqicYrdCdvhOCYDW_WgBMTYd2KPRHNEkcoH2bFyJ1XHOhFet27U9JJkcTOObUQk6G8zWwkMVNjbuFLUZ1YQYDPvW71pDyJHc9yORe1mevZ3AgjsPLi9SRApv8Zuh383StTF7r0sD9h5clD5ND9kP7uFk1SzVopNyFAg_dlMHbSR5cRcykOCKuWlRGBZCyiF-HD9g2zQEHZyYk" />
+            </div>
+
+            <!-- Centered Text -->
+            <div class="w-full text-center">
+                <p class="font-bold text-lg">REPÚBLICA DE PANAMÁ</p>
+                <p class="font-bold text-base">MINISTERIO DE COMERCIO E INDUSTRIAS</p>
+                <p class="text-xs text-gray-700">DIRECCIÓN GENERAL DE COMERCIO INTERIOR</p>
+            </div>
+        </section>
+
+        <!-- Info Cards -->
+        <section class="py-4 grid grid-cols-2 gap-6 px-6 items-stretch">
+            <!-- Left Card -->
+            <div class="border border-gray-300 rounded-lg overflow-hidden flex flex-col h-full shadow-sm text-xs">
+                <div class="bg-gov-blue text-white px-3 py-1 font-bold text-xs text-center">Aviso de Operación Nº</div>
+                <div class="p-3 bg-gray-50 flex-grow flex flex-col justify-center space-y-1 text-center">
+                    <p class="font-bold text-base">{{NUMERO_AVISO}}</p>
+                    <p class="uppercase font-semibold text-gray-700 text-xs">{{REPRESENTANTE}}</p>
+                    <p class="text-gray-600 mt-1 text-xs">Capital Invertido B/. {{CAPITAL}}</p>
+                </div>
+            </div>
+            <!-- Right Card -->
+            <div class="border border-gray-300 rounded-lg overflow-hidden flex flex-col h-full shadow-sm text-xs">
+                <div class="bg-gov-blue text-white px-3 py-1 font-bold text-xs text-center">Expedido a favor de</div>
+                <div class="p-3 bg-gray-50 flex-grow flex flex-col justify-center space-y-1 text-center">
+                    <p class="font-bold uppercase text-base">{{REPRESENTANTE}}</p>
+                    <p class="text-gray-700 text-xs">{{CEDULA}} DV0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content Body -->
+        <section class="pb-4 px-6">
+            <div class="border-2 p-4 watermark-container text-justify relative bg-white rounded-[10px] border-gray-400">
+                <div class="watermark-star">★</div>
+
+                <!-- Business Name -->
+                <div class="text-center mb-3">
+                    <h2
+                        class="font-bold text-gray-800 uppercase tracking-wide border-b-2 border-gray-200 inline-block pb-0.5 text-3xl">
+                        {{NOMBRE_COMERCIAL}}</h2>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Paragraph 1 -->
+                    <p class="text-gray-800 text-justify text-xs leading-relaxed">
+                        Yo, <span class="font-bold">{{REPRESENTANTE}}</span>, con cédula de identidad personal <span
+                            class="font-bold">{{CEDULA}}</span>, nacionalidad Panameño, con domicilio en Provincia de
+                        {{PROVINCIA}} Distrito de {{DISTRITO}}, Corregimiento {{CORREGIMIENTO}}, {{DIRECCION_COMPLETA}}.
+                    </p>
+                    <!-- Paragraph 2 -->
+                    <p class="text-gray-800 text-justify text-xs leading-relaxed">
+                        <span class="font-bold block mb-0.5">Declaro lo siguiente:</span>
+                        El establecimiento denominado <span class="font-bold">{{NOMBRE_COMERCIAL}}</span>, está ubicado
+                        en la Provincia de {{PROVINCIA}}, Distrito de {{DISTRITO}}, Corregimiento de {{CORREGIMIENTO}},
+                        Calle {{CALLE}}, casa: {{CASA}}, Urbanización {{URBANIZACION}}, Inicio de operaciones:
+                        {{FECHA_INICIO}}
+                    </p>
+                    <!-- Paragraph 3 -->
+                    <div class="text-xs leading-relaxed">
+                        <span class="font-bold block mb-0.5">Se dedicará a las actividades de:</span>
+                        <p class="text-gray-800 text-justify">{{ACTIVIDADES}}</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 space-y-2">
+                    <!-- Footer Box 1 -->
+                    <div
+                        class="bg-gray-100 border border-gray-200 p-2 rounded-lg text-[10px] text-gray-600 leading-snug text-justify">
+                        <span class="font-bold">Cláusula de Responsabilidad:</span> En caso de que este Aviso de
+                        Operación haya sido procesado por una persona distinta al Representante Legal o administrador
+                        del establecimiento comercial, dicha persona será solidariamente responsable de la información
+                        suministrada, por lo que deberá firmar al Aviso de Operación en conjunto con el Representante
+                        Legal o administrador del establecimiento comercial según sea el caso. Declaro bajo la gravedad
+                        de juramento
+                    </div>
+                    <!-- Footer Box 2 -->
+                    <div
+                        class="bg-gray-100 border border-gray-200 p-2 rounded-lg text-[10px] text-gray-600 leading-snug text-justify">
+                        Este Aviso de Operación, deberá ser impreso, inmediatamente firmado por los declarantes que
+                        aparecen en la parte inferior del mismo. Además, debe mantenerse en el establecimiento, donde se
+                        ejerce la(s) actividad(es) comercial(es) o industrial(es) y mostrarlo en caso de ser solicitado
+                        por las autoridades Públicas y Competentes, en el ejercicio de su función fiscalizadora.
+                    </div>
+                    <!-- Legal Note -->
+                    <p class="text-[10px] text-gray-500 italic text-center px-1 text-justify">
+                        Tome nota que las modificaciones comerciales... Fundamento legal: Ley 5 de 2007...
+                        PanamáEmprende ha avisado...
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Signatures -->
+        <footer class="pb-6 px-6 mt-1">
+            <div class="grid grid-cols-2 gap-8">
+                <div class="text-center">
+                    <div class="border-t border-black pt-1 w-3/4 mx-auto">
+                        <p class="font-bold text-xs">{{REPRESENTANTE}}</p>
+                        <p class="text-[10px]">C.I.P. {{CEDULA}}</p>
+                        <p class="text-[10px] font-semibold mt-0.5">Firma del Declarante (Tramitador)</p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="border-t border-black pt-1 w-3/4 mx-auto">
+                        <p class="font-bold text-xs">{{REPRESENTANTE}}</p>
+                        <p class="text-[10px]">C.I.P. {{CEDULA}}</p>
+                        <p class="text-[10px] font-semibold mt-0.5">Firma del Dueño del Negocio</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+</body>
+
+</html>

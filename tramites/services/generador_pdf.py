@@ -116,6 +116,7 @@ def generar_pdf_tramite(tramite):
         context = {
             'tramite': tramite,
             'empresa': empresa_data,
+            'avisos': empresa_data.get('avisos_relacionados', []),
             'qr_code_data': qr_code_data,
             'fecha_emision_formateada': fecha_emision_formateada,
             'fecha_firma_formateada': fecha_firma_formateada,
@@ -130,6 +131,7 @@ def generar_pdf_tramite(tramite):
         context = {
             'tramite': tramite,
             'empresa': empresa_data,
+            'avisos': empresa_data.get('avisos_relacionados', []),
         }
     
     # Renderizar plantilla HTML

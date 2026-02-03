@@ -1,0 +1,8 @@
+
+>>> Buscando: 'ADRIAN%DONATO'
+    [OK] Se encontraron 2 resultado(s)
+    Primera empresa: Dtech
+
+>>> Buscando: 'ADRIAN JOSE DONATO'
+    [OK] Se encontraron 2 resultado(s)
+    Primera empresa: Dtech

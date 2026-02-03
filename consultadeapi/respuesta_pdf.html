@@ -1,0 +1,133 @@
+<script>
+    localStorage.clear();
+</script>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="fLJ1fQn6utoLeeQYxT6PLjjUEdL9ye0yuZd0w9tw">
+
+    <title>Panamá Emprende</title>
+
+    <!-- Scripts -->
+    <script src="https://www.panamaemprende.gob.pa/js/app.js" defer></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <!-- Fonts -->
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
+
+    <!-- Styles -->
+    <link href="https://www.panamaemprende.gob.pa/css_admin/app.css" rel="stylesheet">
+    <style>
+        .estilo_cap{
+            margin-left: 30%;
+        }
+
+        @media  only screen and (max-width: 768px) {
+            .estilo_cap{
+            margin-left: 5%;
+        }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="app-container app-theme-white body-tabs-shadow">
+        <div class="app-container">
+            <div class="h-100">
+                <div class="h-100 no-gutters row">
+                        <div class="d-none d-lg-block col-lg-6">
+        <div class="slider-light">
+            <div class="slick-slider">
+
+                <div>
+                    <div class="position-relative h-100 d-flex justify-content-center align-items-center"
+                        style="background-image: linear-gradient(120deg, #000000 0%, #000000 100%) !important;"
+                        tabindex="-1">
+                        <div class="slide-img-bg"
+                            style="background-image: url('/assets_admin/images/originals/imagen-login.jpg');"></div>
+                        <div class="slider-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="h-100 d-flex bg-white justify-content-center align-items-center col-lg-6">
+        <div class="mx-auto app-login-box col-lg-7 col-md-6 col-sm-8 col-10 ">
+            <div class="logo_login">
+                <img src="/plantilla-front/images/logo-pe.png" alt="" class="img-login">
+            </div>
+            <h4 class="mb-0">
+                <span class="d-block" class=""><strong> <i class="pe-7s-home"></i> Bienvenidos</strong></span>
+                <span class="">Inicia sesión en tu cuenta.</span>
+            </h4>
+            
+            <div class="divider row"></div>
+            <div>
+                
+                <form method="POST" action="https://www.panamaemprende.gob.pa/loginNuevo">
+                    <input type="hidden" name="_token" value="fLJ1fQn6utoLeeQYxT6PLjjUEdL9ye0yuZd0w9tw">                    <div class="form-row">
+                        <div class="col-md-12">
+                            <div class="position-relative form-group">
+
+                                <label for="email"> <i class="pe-7s-mail-open" style="font-size: 20px"></i> Correo
+                                    Electrónico</label>
+                                <input id="email" type="email"
+                                    class="form-control " name="email"
+                                    value="" required autocomplete="email"
+                                    placeholder="Ingrese Correo Electrónico" autofocus>
+                                                            </div>
+                        </div>
+
+
+
+                        <div class="col-md-12">
+                            <div class="position-relative form-group">
+                                <label for="password"><i class="pe-7s-door-lock" style="font-size: 20px"></i>
+                                    Contraseña</label>
+                                <input id="password" type="password"
+                                    class="form-control " name="password" required
+                                    autocomplete="current-password" placeholder="Ingrese Contraseña">
+                                                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12">
+                        <button type="submit" class="btn btn-primary btn-lg btn-block"> INICIAR <i
+                                class="pe-7s-angle-right" style="font-size: 15px"></i> </button>
+                    </div>
+                    <div class="col-lg-12" style="margin-top:5px">
+                        <a href="/register" class="btn-lg btn btn-success btn-block">REGISTRARSE <i class="fa fa-plus"></i>
+                        </a>
+                        <div class="divider row"></div>
+                        <div class="row">
+                            <div class="col-lg-12 col-md-12 col-12 text-center">
+                                <a href="/recuperar-password" class="btn-lg btn btn-link">¿HA OLVIDADO LA CONTRASEÑA?</a>
+                            </div>
+                        </div>
+                        <div class="divider row"></div>
+                        <div class="col-lg-12">
+                            <a href="/" class="btn btn-outline-danger btn-lg btn-block">PAGINA INICIAL <i
+                                    class="fa fa-home"></i> </a>
+                        </div>
+                </form>
+            </div>
+        </div>
+
+        
+
+    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="https://www.panamaemprende.gob.pa/assets_admin/scripts/main.8d288f825d8dffbbe55e.js"></script>
+    <script> 
+        localStorage.removeItem('key');
+        localStorage.removeItem('pagina');
+    </script>
+        </body>
+</html>

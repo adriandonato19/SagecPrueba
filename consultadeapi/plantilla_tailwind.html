@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Aviso de Operación - Replica</title>
+    <!-- Tailwind CSS v3 via CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Custom Configuration for specific colors requested -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gov-blue': '#0056b3',
+                        'gov-dark-blue': '#004494',
+                        'star-red': '#D32F2F',
+                    },
+                    fontFamily: {
+                        sans: ['Arial', 'Helvetica', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom Styles for Print/PDF Layout -->
+    <style data-purpose="layout-extras">
+        /* Force full width for PDF generation */
+        body {
+            background-color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .document-container {
+            background-color: white;
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        /* Watermark Styling */
+        .watermark-container {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .watermark-star {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20rem;
+            color: rgba(0, 0, 0, 0.08);
+            z-index: -1;
+            pointer-events: none;
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body class="leading-normal text-sm text-[#333333]">
+    <!-- BEGIN: Main Document Container -->
+    <main class="document-container flex flex-col">
+        <!-- BEGIN: Main Header -->
+        <header
+            class="text-white py-4 relative border-b border-blue-800 bg-gradient-to-b from-gov-dark-blue to-gov-blue px-8">
+            <div class="flex flex-col items-center justify-center space-y-1">
+                <div class="mb-2">
+                    <img alt="Escudo Nacional"
+                        class="h-14 w-14 rounded-full border-2 border-white object-contain bg-white"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI2HXk0m2xbNl20flnzVMXn4dtRQLqdNlFRw1XEKMTHtFxgn3x95EeDRf_GPeCHDgRYIcTzV-zBrHirfe7yVnOaEL_lf5npAKWknpy2TCLzAnlUF_jFkHgE1u5hg_gv5h3qHBi5cFO8WubQXHSkQfOckk--vM35tXg03ok6hRGpo1wmQ4hfbSufUHOT43lxe9iP-I_LdUHvsv2uFRoRaw9GtDZ1jFZJ_00oN6-8CP6A6OKKC2Q6gQC-vjeyS3NyV7E-Sgyhcb5uMY" />
+                </div>
+                <h1 class="text-lg font-bold tracking-wider">GOBIERNO NACIONAL</h1>
+                <div class="text-sm font-semibold tracking-wide">
+                    <span class="text-red-600 text-base align-middle">★</span>
+                    <span class="mx-1">CON PASO FIRME</span>
+                    <span class="text-red-600 text-base align-middle">★</span>
+                </div>
+                <h2 class="font-bold text-sm mt-1">MINISTERIO DE COMERCIO E INDUSTRIAS</h2>
+                <p class="text-xs italic opacity-90">Panamá Emprende</p>
+            </div>
+        </header>
+        <!-- END: Main Header -->
+        <!-- BEGIN: Title Bar -->
+        <div class="bg-gov-dark-blue text-white py-2 text-center w-full">
+            <h3 class="text-xl font-bold tracking-wide">AVISO DE OPERACIÓN</h3>
+        </div>
+        <!-- END: Title Bar -->
+        <!-- BEGIN: Sub-Header Info -->
+        <section class="bg-white py-3 flex flex-row items-center justify-between border-b border-gray-200 px-8">
+            <div class="w-1/5">
+                <img alt="QR Code" class="h-20 w-20"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxwZCjHizKHOBDvmbo1A5OjVnXSBe8TZlIO-KviVNJOqxN1gonh9ZPWpumnGBj_AdqicYrdCdvhOCYDW_WgBMTYd2KPRHNEkcoH2bFyJ1XHOhFet27U9JJkcTOObUQk6G8zWwkMVNjbuFLUZ1YQYDPvW71pDyJHc9yORe1mevZ3AgjsPLi9SRApv8Zuh383StTF7r0sD9h5clD5ND9kP7uFk1SzVopNyFAg_dlMHbSR5cRcykOCKuWlRGBZCyiF-HD9g2zQEHZyYk" />
+            </div>
+            <div class="w-4/5 text-center pr-16">
+                <p class="font-bold text-base">REPÚBLICA DE PANAMÁ</p>
+                <p class="font-bold text-sm">MINISTERIO DE COMERCIO E INDUSTRIAS</p>
+                <p class="text-xs text-gray-700">DIRECCIÓN GENERAL DE COMERCIO INTERIOR</p>
+            </div>
+        </section>
+        <!-- END: Sub-Header Info -->
+        <!-- BEGIN: Info Cards -->
+        <section class="py-4 grid grid-cols-2 gap-4 px-8">
+            <!-- Left Card -->
+            <div class="border border-gray-300 rounded-lg overflow-hidden flex flex-col h-full shadow-sm">
+                <div class="bg-gov-blue text-white px-3 py-1.5 font-bold text-xs">
+                    Aviso de Operación Nº
+                </div>
+                <div class="p-3 bg-gray-50 flex-grow text-xs space-y-1">
+                    <p class="font-bold text-sm">{{NUMERO_AVISO}}</p>
+                    <p class="uppercase font-semibold text-gray-700">{{REPRESENTANTE}}</p>
+                    <p class="text-gray-600 mt-1">Capital Invertido B/. {{CAPITAL}}</p>
+                </div>
+            </div>
+            <!-- Right Card -->
+            <div class="border border-gray-300 rounded-lg overflow-hidden flex flex-col h-full shadow-sm">
+                <div class="bg-gov-blue text-white px-3 py-1.5 font-bold text-xs">
+                    Expedido a favor de
+                </div>
+                <div class="p-3 bg-gray-50 flex-grow text-xs space-y-1">
+                    <p class="font-bold uppercase text-sm">{{REPRESENTANTE}}</p>
+                    <p class="text-gray-700">{{CEDULA}} DV0</p>
+                </div>
+            </div>
+        </section>
+        <!-- END: Info Cards -->
+        <!-- BEGIN: Main Content Body -->
+        <section class="pb-4 px-8">
+            <div class="border-2 p-6 watermark-container text-justify relative bg-white rounded-lg border-gray-400">
+                <!-- Watermark Element (Star) -->
+                <div class="watermark-star">★</div>
+                <!-- Business Name -->
+                <div class="text-center mb-3">
+                    <h2
+                        class="font-bold text-gray-800 uppercase tracking-wide border-b-2 border-gray-200 inline-block pb-1 text-2xl">
+                        {{NOMBRE_COMERCIAL}}</h2>
+                </div>
+                <!-- Paragraph 1: Personal Info -->
+                <p class="mb-3 text-gray-800 leading-relaxed text-justify text-xs">
+                    Yo, <span class="font-bold">{{REPRESENTANTE}}</span>, con cédula de identidad personal <span
+                        class="font-bold">{{CEDULA}}</span>, nacionalidad Panameño, con domicilio en Provincia de
+                    {{PROVINCIA}} Distrito de {{DISTRITO}}, Corregimiento {{CORREGIMIENTO}}, {{DIRECCION_COMPLETA}}.
+                </p>
+                <!-- Paragraph 2: Location -->
+                <p class="mb-3 text-gray-800 leading-relaxed text-justify text-xs">
+                    <span class="font-bold block mb-1">Declaro lo siguiente:</span>
+                    El establecimiento denominado <span class="font-bold">{{NOMBRE_COMERCIAL}}</span>, está ubicado en
+                    la Provincia de {{PROVINCIA}}, Distrito de {{DISTRITO}}, Corregimiento de {{CORREGIMIENTO}}, Calle
+                    {{CALLE}}, casa: {{CASA}}, Urbanización {{URBANIZACION}}, Inicio de operaciones: {{FECHA_INICIO}}
+                </p>
+                <!-- Paragraph 3: Activities -->
+                <div class="mb-4">
+                    <span class="font-bold block mb-1 text-xs">Se dedicará a las actividades de:</span>
+                    <p class="text-gray-800 leading-relaxed text-justify text-xs">
+                        {{ACTIVIDADES}}
+                    </p>
+                </div>
+                <!-- Footer Box 1: Clause of Responsibility -->
+                <div
+                    class="bg-gray-100 border border-gray-200 p-2 rounded-lg mb-2 text-[10px] text-gray-600 leading-snug">
+                    <span class="font-bold">Cláusula de Responsabilidad:</span> En caso de que este Aviso de Operación
+                    haya sido procesado por una persona distinta al Representante Legal o administrador del
+                    establecimiento comercial, dicha persona será solidariamente responsable de la información
+                    suministrada, por lo que deberá firmar al Aviso de Operación en conjunto con el Representante Legal
+                    o administrador del establecimiento comercial según sea el caso. Declaro bajo la gravedad de
+                    juramento que toda la información por mi afirmada al sistema PanamáEmprende en el presente proceso
+                    de Aviso de Operación, son ciertos.
+                </div>
+                <!-- Footer Box 2: Printing requirement -->
+                <div
+                    class="bg-gray-100 border border-gray-200 p-2 rounded-lg mb-2 text-[10px] text-gray-600 leading-snug">
+                    Este Aviso de Operación, deberá ser impreso, inmediatamente firmado por los declarantes que aparecen
+                    en la parte inferior del mismo. Además, debe mantenerse en el establecimiento, donde se ejerce la(s)
+                    actividad(es) comercial(es) o industrial(es) y mostrarlo en caso de ser solicitado por las
+                    autoridades Públicas y Competentes, en el ejercicio de su función fiscalizadora.
+                </div>
+                <!-- Legal Note -->
+                <p class="text-[10px] text-gray-500 italic text-center px-2 text-justify">
+                    Tome nota que las modificaciones comerciales deben ser previamente validadas con el Municipio
+                    respectivo. Fundamento legal: Ley 5 de 2007 y Ley 2 de 2011. PanamáEmprende ha avisado de la
+                    apertura del negocio a la caja del seguro social y al municipio respectivo.
+                </p>
+            </div>
+        </section>
+        <!-- END: Main Content Body -->
+        <!-- BEGIN: Signatures -->
+        <footer class="pb-6 mt-2 px-8">
+            <div class="grid grid-cols-2 gap-8">
+                <!-- Left Signature -->
+                <div class="text-center">
+                    <div class="border-t border-black pt-2 w-3/4 mx-auto">
+                        <p class="font-bold text-xs">{{REPRESENTANTE}}</p>
+                        <p class="text-[10px]">C.I.P. {{CEDULA}}</p>
+                        <p class="text-[10px] font-semibold mt-1">Firma del Declarante (Tramitador)</p>
+                    </div>
+                </div>
+                <!-- Right Signature -->
+                <div class="text-center">
+                    <div class="border-t border-black pt-2 w-3/4 mx-auto">
+                        <p class="font-bold text-xs">{{REPRESENTANTE}}</p>
+                        <p class="text-[10px]">C.I.P. {{CEDULA}}</p>
+                        <p class="text-[10px] font-semibold mt-1">Firma del Dueño del Negocio</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <!-- END: Signatures -->
+    </main>
+    <!-- END: Main Document Container -->
+</body>
+
+</html>

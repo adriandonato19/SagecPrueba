@@ -96,3 +96,10 @@ LOGIN_REDIRECT_URL = 'integracion:buscador' # A donde ir después de loguearse
 LOGOUT_REDIRECT_URL = 'identidad:login'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 9. Configuración de API Panamá Emprende
+# En producción, estos valores deben venir de variables de entorno
+API_PANAMA_EMPRENDE_URL = os.environ.get('API_PANAMA_EMPRENDE_URL', 'https://api.panamaemprende.gob.pa/api/consulta/multiple')
+API_PANAMA_EMPRENDE_USER = os.environ.get('API_PANAMA_EMPRENDE_USER', 'cert')
+API_PANAMA_EMPRENDE_PASSWORD = os.environ.get('API_PANAMA_EMPRENDE_PASSWORD', 'NlQpUjtTRlo+OTI8NnRQOV1ocjB+QVVDMS1CIm5nRnd5eTIhJVxtNyglPFtG')
+USE_MOCK_API = os.environ.get('USE_MOCK_API', 'False') == 'True' # Cambiado a False para usar API real
