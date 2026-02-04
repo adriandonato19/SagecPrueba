@@ -31,7 +31,7 @@
     {% block extra_head %}{% endblock %}
 </head>
 
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-100 min-h-screen flex flex-col" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     <!-- Navbar (Top) -->
     <nav class="bg-blue-900 text-white shadow-md z-50 fixed w-full top-0 h-16 flex items-center">
         <div class="px-4 sm:px-6 lg:px-8 w-full flex justify-between items-center">

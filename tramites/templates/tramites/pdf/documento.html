@@ -116,7 +116,31 @@
             {% endif %}
         </div>
 
-        {% if empresa %}
+        {% if lista_empresas and lista_empresas|length > 1 %}
+        <div class="section">
+            <div class="section-title">Información de las Empresas Relacionadas</div>
+            {% for emp in lista_empresas %}
+            <div style="margin-bottom: 15px; border-bottom: 1px dashed #ccc; padding-bottom: 10px;">
+                <div class="field">
+                    <span class="field-label">RUC:</span>
+                    <span class="field-value">{{ emp.ruc_completo|default:emp.ruc|default:"N/A" }}</span>
+                </div>
+                {% if emp.razon_social %}
+                <div class="field">
+                    <span class="field-label">Razón Social:</span>
+                    <span class="field-value">{{ emp.razon_social }}</span>
+                </div>
+                {% endif %}
+                {% if emp.razon_comercial %}
+                <div class="field">
+                    <span class="field-label">Razón Comercial:</span>
+                    <span class="field-value">{{ emp.razon_comercial }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% elif empresa %}
         <div class="section">
             <div class="section-title">Información de la Empresa</div>
 

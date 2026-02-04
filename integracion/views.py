@@ -75,3 +75,56 @@ def detalle_empresa_hx(request, aviso):
     return render(request, 'integracion/partials/modal_detalle.html', {
         'empresa': empresa
     })
+
+@login_required
+@require_http_methods(["POST"])
+def agregar_al_carrito_hx(request, aviso):
+    """Agrega una empresa (aviso) a la selección actual."""
+    avisos_busqueda = request.session.get('avisos_busqueda', [])
+    seleccion = request.session.get('seleccion_tramite', [])
+    
+    # Buscar el objeto completo en la búsqueda reciente
+    candidato = next((e for e in avisos_busqueda if str(e.get('numero_aviso')) == str(aviso)), None)
+    
+    if candidato:
+        # Evitar duplicados
+        exists = any(str(s.get('numero_aviso')) == str(aviso) for s in seleccion)
+        if not exists:
+            # Encontrar avisos relacionados en la búsqueda actual (mismo RUC)
+            # Esto es CRÍTICO porque al buscar otra empresa, avisos_busqueda cambiará.
+            ruc_obj = candidato.get('ruc')
+            avisos_relacionados = [a for a in avisos_busqueda if a.get('ruc') == ruc_obj]
+            
+            # Adjuntar al candidato
+            candidato_copy = candidato.copy() # Copia superficial para no alterar session actual si fuera ref
+            candidato_copy['avisos_relacionados'] = avisos_relacionados
+            
+            seleccion.append(candidato_copy)
+            request.session['seleccion_tramite'] = seleccion
+            request.session.modified = True
+            
+    return render(request, 'integracion/partials/carrito_status.html', {
+        'seleccion': seleccion
+    })
+
+@login_required
+@require_http_methods(["POST"])
+def remover_del_carrito_hx(request, aviso):
+    """Elimina una empresa de la selección."""
+    seleccion = request.session.get('seleccion_tramite', [])
+    seleccion = [s for s in seleccion if str(s.get('numero_aviso')) != str(aviso)]
+    
+    request.session['seleccion_tramite'] = seleccion
+    request.session.modified = True
+    
+    return render(request, 'integracion/partials/carrito_status.html', {
+        'seleccion': seleccion
+    })
+
+@login_required
+def status_carrito_hx(request):
+    """Renderiza el estado actual del carrito (ej. al recargar página)."""
+    seleccion = request.session.get('seleccion_tramite', [])
+    return render(request, 'integracion/partials/carrito_status.html', {
+        'seleccion': seleccion
+    })

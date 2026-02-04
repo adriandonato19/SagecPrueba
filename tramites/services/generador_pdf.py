@@ -83,14 +83,31 @@ def generar_pdf_tramite(tramite):
     
     $Reusable$
     """
-    # Obtener datos de empresa del snapshot
-    empresa_data = tramite.empresa_snapshot if isinstance(tramite.empresa_snapshot, dict) else {}
+    # Obtener datos de empresa del snapshot (Soporte Dict o List)
+    raw_snapshot = tramite.empresa_snapshot
+    lista_empresas = []
     
-    # Construir ubicación completa si no existe
-    if 'ubicacion_completa' not in empresa_data:
-        from integracion.adapters import construir_ubicacion_completa
-        empresa_data['ubicacion_completa'] = construir_ubicacion_completa(empresa_data)
+    if isinstance(raw_snapshot, list):
+        lista_empresas = raw_snapshot
+    elif isinstance(raw_snapshot, dict):
+        lista_empresas = [raw_snapshot]
+    else:
+        lista_empresas = []
+        
+    # Enriquecer datos (ubicacion)
+    for emp in lista_empresas:
+        if 'ubicacion_completa' not in emp:
+            from integracion.adapters import construir_ubicacion_completa
+            emp['ubicacion_completa'] = construir_ubicacion_completa(emp)
+            
+    # Empresa principal (para datos singulares)
+    empresa_principal = lista_empresas[0] if lista_empresas else {}
     
+    # Recolectar todos los avisos de todas las empresas
+    todos_avisos = []
+    for emp in lista_empresas:
+        todos_avisos.extend(emp.get('avisos_relacionados', []))
+
     # Determinar qué plantilla usar
     if tramite.tipo_documento == 'CERTIFICADO':
         template_name = 'tramites/pdf/oficio_oficial.html'
@@ -105,8 +122,8 @@ def generar_pdf_tramite(tramite):
         fecha_firma_formateada = formatear_fecha_espanol(tramite.fecha_firma) if tramite.fecha_firma else fecha_emision_formateada
         fecha_solicitud_formateada = formatear_fecha_espanol(tramite.fecha_solicitud) if tramite.fecha_solicitud else formatear_fecha_espanol(tramite.fecha_creacion)
         
-        # Formatear fecha de inicio de operaciones de la empresa
-        fecha_inicio_ops = empresa_data.get('fecha_inicio_operaciones')
+        # Formatear fecha de inicio de operaciones de la empresa principal
+        fecha_inicio_ops = empresa_principal.get('fecha_inicio_operaciones')
         fecha_inicio_ops_formateada = formatear_fecha_espanol(fecha_inicio_ops) if fecha_inicio_ops else ""
         
         # Rutas a imágenes oficiales
@@ -115,8 +132,9 @@ def generar_pdf_tramite(tramite):
         
         context = {
             'tramite': tramite,
-            'empresa': empresa_data,
-            'avisos': empresa_data.get('avisos_relacionados', []),
+            'empresa': empresa_principal, # Compatibilidad
+            'lista_empresas': lista_empresas, # Multi
+            'avisos': todos_avisos,
             'qr_code_data': qr_code_data,
             'fecha_emision_formateada': fecha_emision_formateada,
             'fecha_firma_formateada': fecha_firma_formateada,
@@ -130,8 +148,9 @@ def generar_pdf_tramite(tramite):
         template_name = 'tramites/pdf/documento.html'
         context = {
             'tramite': tramite,
-            'empresa': empresa_data,
-            'avisos': empresa_data.get('avisos_relacionados', []),
+            'empresa': empresa_principal,
+            'lista_empresas': lista_empresas,
+            'avisos': todos_avisos,
         }
     
     # Renderizar plantilla HTML

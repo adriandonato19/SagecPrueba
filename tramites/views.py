@@ -106,6 +106,7 @@ def crear_tramite_view(request):
     # ==========================
 
     if request.method == 'POST':
+        modo = request.POST.get('modo', '')
         ruc_full = request.POST.get('ruc', '').strip()
         # Limpiar el RUC si trae sucursal para la búsqueda técnica
         ruc = "-".join(ruc_full.split("-")[:3]) 
@@ -115,55 +116,53 @@ def crear_tramite_view(request):
         proposito = request.POST.get('proposito', '').strip()
         fecha_solicitud_str = request.POST.get('fecha_solicitud', '').strip()
         
-        if not ruc:
-            messages.error(request, 'Debe proporcionar un RUC.')
-            return redirect('integracion:buscador')
-        
-        # Validar campos requeridos para certificados
-        if tipo_documento == 'CERTIFICADO':
-            if not destinatario:
-                messages.error(request, 'El destinatario es obligatorio para certificados.')
-                return redirect('tramites:crear')
-            if not proposito:
-                messages.error(request, 'El propósito es obligatorio para certificados.')
-                return redirect('tramites:crear')
-        
-        # PRIMERO: Intentar usar los datos de la sesión
-        numero_aviso_seleccionado = request.POST.get('aviso', '').strip() or request.GET.get('aviso', '').strip()
-        
         resultado = None
         
-        if avisos_session and numero_aviso_seleccionado:
-            log_debug(f"DEBUG POST: Buscando aviso {numero_aviso_seleccionado} en sesión...")
-            # Buscar el aviso específico en los datos de la sesión
-            for aviso in avisos_session:
-                if str(aviso.get('numero_aviso')) == str(numero_aviso_seleccionado):
-                    # Encontrar todos los avisos que pertenezcan al mismo RUC (para incluir sucursales)
-                    ruc_obj = aviso.get('ruc')
-                    avisos_relacionados = [a for a in avisos_session if a.get('ruc') == ruc_obj]
-                    
-                    resultado = {
-                        'detalle': aviso,
-                        'avisos': avisos_relacionados if avisos_relacionados else [aviso]
-                    }
-                    log_debug(f"DEBUG POST: ENCONTRADO en sesión! {len(resultado['avisos'])} avisos vinculados.")
-                    break
+        # LOGICA MULTI-EMPRESA
+        if modo == 'seleccion':
+            seleccion_carrito = request.session.get('seleccion_tramite', [])
+            if not seleccion_carrito:
+                messages.error(request, 'No hay empresas seleccionadas.')
+                return redirect('integracion:buscador')
+            
+            # El resultado será directamente la lista de empresas
+            # Nota: Esto cambia la estructura de empresa_snapshot de dict a list
+            resultado = seleccion_carrito
+            log_debug(f"DEBUG POST: Creando trámite MULTIPLE con {len(resultado)} empresas.")
+            
         else:
-            log_debug("DEBUG POST: No se buscó en sesión (falta session o aviso id)")
-       
-        # Si no encontramos en sesión, NO hacer búsqueda normal (fallback) para evitar datos erróneos
-        if not resultado:
-            log_debug("DEBUG POST: No encontrado en sesión. Fallback DESHABILITADO para prevenir Jaime Lee Chen.")
-            # log_debug(f"DEBUG POST: Fallback API por RUC: {ruc}")
-            # resultado = buscar_empresa(ruc)
-            # ...
-            messages.error(request, 'La sesión de búsqueda ha expirado o el aviso no coincide. Por favor busque la empresa nuevamente.')
-            return redirect('integracion:buscador')
-        
-        if not resultado:
-            log_debug("DEBUG POST: No se encontró resultado final.")
-            messages.error(request, 'No se encontró información para el RUC proporcionado.')
-            return redirect('integracion:buscador')
+            # LOGICA PREVIA (SINGLE)
+            if not ruc:
+                messages.error(request, 'Debe proporcionar un RUC.')
+                return redirect('integracion:buscador')
+            
+            # PRIMERO: Intentar usar los datos de la sesión
+            numero_aviso_seleccionado = request.POST.get('aviso', '').strip() or request.GET.get('aviso', '').strip()
+            
+            if avisos_session and numero_aviso_seleccionado:
+                log_debug(f"DEBUG POST: Buscando aviso {numero_aviso_seleccionado} en sesión...")
+                # Buscar el aviso específico en los datos de la sesión
+                for aviso in avisos_session:
+                    if str(aviso.get('numero_aviso')) == str(numero_aviso_seleccionado):
+                        # Encontrar todos los avisos que pertenezcan al mismo RUC (para incluir sucursales)
+                        ruc_obj = aviso.get('ruc')
+                        avisos_relacionados = [a for a in avisos_session if a.get('ruc') == ruc_obj]
+                        
+                        resultado = {
+                            'detalle': aviso,
+                            'avisos': avisos_relacionados if avisos_relacionados else [aviso]
+                        }
+                        log_debug(f"DEBUG POST: ENCONTRADO en sesión! {len(resultado['avisos'])} avisos vinculados.")
+                        break
+            else:
+                log_debug("DEBUG POST: No se buscó en sesión (falta session o aviso id)")
+           
+            # Fallback deshabilitado (ya eliminado en paso anterior)
+            
+            if not resultado:
+                log_debug("DEBUG POST: No se encontró resultado final.")
+                messages.error(request, 'La sesión de búsqueda ha expirado o el aviso no coincide. Por favor busque la empresa nuevamente.')
+                return redirect('integracion:buscador')
         
         # Parsear fecha de solicitud
         fecha_solicitud = None
@@ -175,8 +174,13 @@ def crear_tramite_view(request):
                 pass
         
         # Preparar snapshot con avisos
-        snapshot = resultado['detalle'].copy()
-        snapshot['avisos_relacionados'] = resultado['avisos']
+        if isinstance(resultado, list):
+            # Modo Selección Múltiple: El snapshot es la lista completa
+            snapshot = resultado
+        else:
+            # Modo Único (Compatibilidad): Es un dict con 'detalle' y 'avisos'
+            snapshot = resultado['detalle'].copy()
+            snapshot['avisos_relacionados'] = resultado['avisos']
         
         # Crear trámite
         tramite = Tramite.objects.create(
@@ -232,25 +236,40 @@ def crear_tramite_view(request):
     
     # GET: mostrar formulario de creación
     # -----------------------------------
+    modo = request.GET.get('modo', '')
     ruc = request.GET.get('crear_tramite', '')
     aviso_id = request.GET.get('aviso', '')
     
+    avisos_session = request.session.get('avisos_busqueda', [])
+    seleccion_carrito = request.session.get('seleccion_tramite', [])
+    
     empresa_detalle = None
+    lista_empresas = []
     source = "NONE"
     
-    # 1. Intentar buscar en sesión por ID de aviso (Prioridad Máxima)
-    if aviso_id and avisos_session:
+    # MODO SELECCIÓN MÚLTIPLE (CARRITO)
+    if modo == 'seleccion' and seleccion_carrito:
+        log_debug(f"DEBUG GET: Modo Selección Múltiple. {len(seleccion_carrito)} empresas.")
+        lista_empresas = seleccion_carrito
+        # Usar la primera como 'principal' para rellenar campos por defecto si es necesario,
+        # o dejar empresa_detalle como None y manejar la lista en el template.
+        empresa_detalle = seleccion_carrito[0] 
+        source = "CARRITO"
+    
+    # 1. Intentar buscar en sesión por ID de aviso (Prioridad Máxima - Flujo Single)
+    elif aviso_id and avisos_session:
         log_debug(f"DEBUG GET: Buscando aviso_id='{aviso_id}' en sesión...")
         for av in avisos_session:
              # log_debug(f"DEBUG GET: Comparando con {av.get('numero_aviso')}")
              if str(av.get('numero_aviso')) == str(aviso_id):
                  empresa_detalle = av
+                 lista_empresas = [av]
                  source = "SESSION"
                  log_debug(f"DEBUG GET: MATCH en sesión! {av.get('razon_social')}")
                  break
     
-    # 2. Fallback: buscar por RUC en API si no estaba en sesión
-    if not empresa_detalle and ruc:
+    # 2. Fallback (si existe RUC pero no aviso específico en sesión)
+    elif not empresa_detalle and ruc:
         log_debug(f"DEBUG GET: Fallback API busqueda por RUC '{ruc}'...")
         res = buscar_empresa(ruc)
         if res:
@@ -261,17 +280,21 @@ def crear_tramite_view(request):
              else:
                  empresa_detalle = res['detalle']
                  source = "API_RUC_DEFAULT"
+             
+             lista_empresas = [empresa_detalle]
         log_debug(f"DEBUG GET: Resultado API Source={source}")
 
-    if empresa_detalle:
-        log_debug(f"DEBUG GET: Empresa Final: {empresa_detalle.get('razon_social')} (Aviso: {empresa_detalle.get('numero_aviso')})")
+    if empresa_detalle or lista_empresas:
+        log_debug(f"DEBUG GET: Empresa Final o Lista Cargada. Source={source}")
     else:
         log_debug("DEBUG GET: Empresa Final es NONE")
 
     return render(request, 'tramites/crear.html', {
         'ruc': ruc,
         'aviso': aviso_id,
-        'empresa': empresa_detalle,
+        'empresa': empresa_detalle, # Para compatibilidad hacia atrás
+        'lista_empresas': lista_empresas, # Nueva variable para múltiples
+        'modo': modo
     })
 
 

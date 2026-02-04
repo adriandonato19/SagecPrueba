@@ -63,6 +63,10 @@
         </form>
     </div>
 
+    <!-- Carrito de Selección -->
+    <div id="carrito-status-container" hx-get="{% url 'integracion:status_carrito' %}" hx-trigger="load" class="mb-6">
+    </div>
+
     <!-- Área de resultados (se actualiza vía HTMX) -->
     <div id="resultados">
         <div class="bg-white shadow-lg rounded-lg p-6 text-center text-gray-500">

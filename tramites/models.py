@@ -106,4 +106,23 @@ class Tramite(models.Model):
         self.fecha_firma = timezone.now()
         if hash_documento:
             self.hash_seguridad = hash_documento
-        self.save() 
+        self.save()
+
+    @property
+    def es_multi_empresa(self):
+        """Devuelve True si el snapshot es una lista de empresas."""
+        return isinstance(self.empresa_snapshot, list)
+        
+    @property
+    def empresa_principal(self):
+        """Devuelve la empresa principal para mostrar datos generales."""
+        if self.es_multi_empresa:
+            return self.empresa_snapshot[0] if self.empresa_snapshot else {}
+        return self.empresa_snapshot
+        
+    @property
+    def lista_empresas(self):
+        """Devuelve siempre una lista iterable de empresas."""
+        if self.es_multi_empresa:
+            return self.empresa_snapshot
+        return [self.empresa_snapshot]
