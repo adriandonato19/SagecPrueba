@@ -108,6 +108,12 @@ def crear_tramite_view(request):
     if request.method == 'POST':
         modo = request.POST.get('modo', '')
         ruc_full = request.POST.get('ruc', '').strip()
+        
+        # Inferir modo selección si hay carrito con empresas pero modo no vino explícito
+        seleccion_carrito_check = request.session.get('seleccion_tramite', [])
+        if not modo and seleccion_carrito_check and not ruc_full:
+            modo = 'seleccion'
+            log_debug("DEBUG POST: Modo inferido como 'seleccion' por carrito existente.")
         # Limpiar el RUC si trae sucursal para la búsqueda técnica
         ruc = "-".join(ruc_full.split("-")[:3]) 
 
@@ -115,6 +121,7 @@ def crear_tramite_view(request):
         destinatario = request.POST.get('destinatario', '').strip()
         proposito = request.POST.get('proposito', '').strip()
         fecha_solicitud_str = request.POST.get('fecha_solicitud', '').strip()
+        pregunta_adicional = request.POST.get('pregunta_adicional', '').strip()
         
         resultado = None
         
@@ -132,21 +139,26 @@ def crear_tramite_view(request):
             
         else:
             # LOGICA PREVIA (SINGLE)
-            if not ruc:
-                messages.error(request, 'Debe proporcionar un RUC.')
-                return redirect('integracion:buscador')
+            numero_aviso_seleccionado = request.POST.get('aviso', '').strip()
             
-            # PRIMERO: Intentar usar los datos de la sesión
-            numero_aviso_seleccionado = request.POST.get('aviso', '').strip() or request.GET.get('aviso', '').strip()
-            
+            # PRIMERO: Intentar buscar el aviso en sesión para obtener datos completos
             if avisos_session and numero_aviso_seleccionado:
                 log_debug(f"DEBUG POST: Buscando aviso {numero_aviso_seleccionado} en sesión...")
-                # Buscar el aviso específico en los datos de la sesión
                 for aviso in avisos_session:
                     if str(aviso.get('numero_aviso')) == str(numero_aviso_seleccionado):
-                        # Encontrar todos los avisos que pertenezcan al mismo RUC (para incluir sucursales)
-                        ruc_obj = aviso.get('ruc')
-                        avisos_relacionados = [a for a in avisos_session if a.get('ruc') == ruc_obj]
+                        # Si no teníamos RUC del POST, extraerlo del aviso o del número de aviso
+                        if not ruc:
+                            ruc = aviso.get('ruc', '') or aviso.get('ruc_completo', '')
+                            # Fallback: extraer RUC de numero_aviso (formato: RUC-AÑO-NUMERO-SUC)
+                            if not ruc and numero_aviso_seleccionado:
+                                parts = numero_aviso_seleccionado.split('-')
+                                if len(parts) >= 3:
+                                    ruc = '-'.join(parts[:3])
+                            log_debug(f"DEBUG POST: RUC extraído del aviso: {ruc}")
+                        
+                        # Encontrar todos los avisos que pertenezcan al mismo RUC
+                        ruc_obj = aviso.get('ruc') or ruc
+                        avisos_relacionados = [a for a in avisos_session if (a.get('ruc') or '').startswith(ruc) or ruc in str(a.get('numero_aviso', ''))]
                         
                         resultado = {
                             'detalle': aviso,
@@ -156,22 +168,29 @@ def crear_tramite_view(request):
                         break
             else:
                 log_debug("DEBUG POST: No se buscó en sesión (falta session o aviso id)")
-           
-            # Fallback deshabilitado (ya eliminado en paso anterior)
             
+            # Validar que tenemos RUC (después de intentar extraerlo)
+            if not ruc and not resultado:
+                messages.error(request, 'Debe proporcionar un RUC.')
+                return redirect('integracion:buscador')
+           
             if not resultado:
                 log_debug("DEBUG POST: No se encontró resultado final.")
                 messages.error(request, 'La sesión de búsqueda ha expirado o el aviso no coincide. Por favor busque la empresa nuevamente.')
                 return redirect('integracion:buscador')
         
-        # Parsear fecha de solicitud
+        # Parsear fecha de solicitud (soportar múltiples formatos)
         fecha_solicitud = None
         if fecha_solicitud_str:
-            try:
-                from datetime import datetime
-                fecha_solicitud = datetime.strptime(fecha_solicitud_str, '%Y-%m-%d').date()
-            except ValueError:
-                pass
+            from datetime import datetime
+            # Formatos posibles: HTML5 (YYYY-MM-DD), Español (DD/MM/YYYY), Español con guiones
+            formatos = ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']
+            for fmt in formatos:
+                try:
+                    fecha_solicitud = datetime.strptime(fecha_solicitud_str, fmt).date()
+                    break
+                except ValueError:
+                    continue
         
         # Preparar snapshot con avisos
         if isinstance(resultado, list):
@@ -181,6 +200,25 @@ def crear_tramite_view(request):
             # Modo Único (Compatibilidad): Es un dict con 'detalle' y 'avisos'
             snapshot = resultado['detalle'].copy()
             snapshot['avisos_relacionados'] = resultado['avisos']
+        
+        # Recopilar preguntas adicionales por empresa si es múltiple
+        datos_qa = {}
+        if isinstance(resultado, list):
+            for emp in resultado:
+                # Usar numero_aviso como clave única, fallback a RUC
+                aviso_id = str(emp.get('numero_aviso') or emp.get('ruc') or 'N/A')
+                # En el formulario usaremos name="pregunta_{aviso_id}"
+                # Sanear el ID para usarlo como clave de campo HTML si es necesario (ej: quitando espacios)
+                # Pero aquí asumimos que el template enviará con la clave correcta
+                pregunta_key = f"pregunta_{aviso_id}"
+                pregunta_individual = request.POST.get(pregunta_key, '').strip()
+                
+                if pregunta_individual:
+                    datos_qa[aviso_id] = {
+                        'nombre': emp.get('razon_social', 'Empresa'),
+                        'pregunta': pregunta_individual,
+                        'respuesta': ''
+                    }
         
         # Crear trámite
         tramite = Tramite.objects.create(
@@ -192,7 +230,9 @@ def crear_tramite_view(request):
             estado=Tramite.BORRADOR,
             destinatario=destinatario,
             proposito=proposito,
-            fecha_solicitud=fecha_solicitud
+            fecha_solicitud=fecha_solicitud,
+            pregunta_adicional=pregunta_adicional,
+            datos_qa=datos_qa
         )
         
         # Generar PDF inmediatamente al crear el trámite
@@ -288,6 +328,10 @@ def crear_tramite_view(request):
         log_debug(f"DEBUG GET: Empresa Final o Lista Cargada. Source={source}")
     else:
         log_debug("DEBUG GET: Empresa Final es NONE")
+    
+    # Si no teníamos RUC del GET pero sí encontramos empresa, extraerlo
+    if not ruc and empresa_detalle:
+        ruc = empresa_detalle.get('ruc', '') or empresa_detalle.get('ruc_completo', '')
 
     return render(request, 'tramites/crear.html', {
         'ruc': ruc,
@@ -385,7 +429,49 @@ def aprobar_view(request, id):
     
     try:
         estado_anterior = tramite.estado
+        
+        # Guardar respuesta a pregunta adicional si existe
+        respuesta_pregunta = request.POST.get('respuesta_pregunta', '').strip()
+        if respuesta_pregunta and tramite.pregunta_adicional:
+            tramite.respuesta_pregunta = respuesta_pregunta
+            tramite.save(update_fields=['respuesta_pregunta'])
+            
+        # Guardar respuestas a preguntas múltiples (Multi)
+        if tramite.datos_qa:
+            updated_qa = False
+            # Iterar sobre una copia o directamente, datos_qa es un dict
+            for aviso_id, data in tramite.datos_qa.items():
+                respuesta_key = f"respuesta_{aviso_id}"
+                respuesta = request.POST.get(respuesta_key, '').strip()
+                # Solo actualizar si viene respuesta (el frontend lo marca required si estaba vacío)
+                if respuesta:
+                    data['respuesta'] = respuesta
+                    updated_qa = True
+            
+            if updated_qa:
+                tramite.save(update_fields=['datos_qa'])
+        
         tramite.aprobar(request.user)
+        
+        # Regenerar PDF con la respuesta incluida
+        try:
+            pdf_bytesio = generar_pdf_tramite(tramite)
+            pdf_content = pdf_bytesio.read()
+            
+            temp_pdf_dir = Path(__file__).parent / 'temp_pdfs'
+            temp_pdf_dir.mkdir(exist_ok=True)
+            
+            pdf_filename = f'tramite_{tramite.uuid}.pdf'
+            pdf_path = temp_pdf_dir / pdf_filename
+            
+            with open(pdf_path, 'wb') as f:
+                f.write(pdf_content)
+            
+            tramite.archivo_pdf.name = f'temp_pdfs/{pdf_filename}'
+            tramite.save(update_fields=['archivo_pdf'])
+            log_debug(f"DEBUG: PDF regenerado con respuesta para trámite {tramite.uuid}")
+        except Exception as e:
+            log_debug(f"ERROR: No se pudo regenerar PDF: {e}")
         
         # Registrar evento de aprobación
         ip_cliente = obtener_ip_cliente(request)

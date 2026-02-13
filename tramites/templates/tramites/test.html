@@ -31,47 +31,119 @@
 
         <div class="mb-6">
             <h2 class="text-xl font-semibold mb-4">Información de la Empresa</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full border border-gray-300">
-                    <thead>
-                        <tr class="bg-gray-100">
-                            <th
-                                class="border border-gray-300 px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase">
-                                RUC Completo</th>
-                            <th
-                                class="border border-gray-300 px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase">
-                                Razón Social</th>
-                            <th
-                                class="border border-gray-300 px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase">
-                                N° Aviso de Operación</th>
-                            <th
-                                class="border border-gray-300 px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase">
-                                Estatus</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for emp in tramite.lista_empresas %}
-                        <tr class="{% cycle '' 'bg-gray-50' %}">
-                            <td class="border border-gray-300 px-4 py-2 text-sm text-gray-900">
-                                {{ emp.ruc_completo|default:"N/A" }}
-                            </td>
-                            <td class="border border-gray-300 px-4 py-2 text-sm text-gray-900 font-semibold">
-                                {{ emp.razon_social|default:"N/A" }}
-                            </td>
-                            <td class="border border-gray-300 px-4 py-2 text-sm text-gray-900">
-                                {{ emp.numero_aviso|default:"N/A" }}
-                            </td>
-                            <td class="border border-gray-300 px-4 py-2 text-sm">
-                                {% if emp.estatus %}
-                                {% include 'components/badge.html' with estado=emp.estatus %}
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                {% with empresa=tramite.empresa_principal %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Columna 1 -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">RUC Completo</label>
+                            <p class="text-lg font-semibold text-gray-900">{{
+                                empresa.ruc|default:empresa.cedula_representante|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Razón Social</label>
+                            <p class="text-lg font-semibold text-gray-900">{{ empresa.razon_social|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Razón
+                                Comercial</label>
+                            <p class="text-lg text-gray-700">{{ empresa.razon_comercial|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Representante
+                                Legal</label>
+                            <p class="text-lg text-gray-700">{{ empresa.representante_legal|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Estatus</label>
+                            <div class="mt-1">
+                                {% if empresa.estatus %}
+                                {% include 'components/badge.html' with estado=empresa.estatus %}
                                 {% else %}
                                 <span class="text-gray-500">N/A</span>
                                 {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna 2 -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ubicación</label>
+                            <p class="text-lg text-gray-700">{{ empresa.ubicacion_completa|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Actividad
+                                Comercial</label>
+                            <p class="text-lg text-gray-700">{{ empresa.actividad_comercial|default:"N/A" }}</p>
+                        </div>
+                        {% if empresa.capital_invertido %}
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Capital
+                                Invertido</label>
+                            <p class="text-2xl font-bold text-blue-900">${{ empresa.capital_invertido }}</p>
+                        </div>
+                        {% endif %}
+                        {% if empresa.fecha_inicio_operaciones %}
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Fecha Inicio
+                                Operaciones</label>
+                            <p class="text-lg text-gray-700">{{ empresa.fecha_inicio_operaciones }}</p>
+                        </div>
+                        {% endif %}
+                        {% if empresa.sucursal %}
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Sucursal</label>
+                            <p class="text-lg font-bold text-blue-700">#{{ empresa.sucursal }}</p>
+                        </div>
+                        {% endif %}
+                        {% if empresa.numero_aviso %}
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Número de
+                                Aviso</label>
+                            <p class="text-lg text-gray-700">{{ empresa.numero_aviso }}</p>
+                        </div>
+                        {% endif %}
+                        {% if empresa.numero_licencia %}
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Número de
+                                Licencia</label>
+                            <p class="text-lg text-gray-700">{{ empresa.numero_licencia }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endwith %}
+
+                {% if tramite.es_multi_empresa %}
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Empresas Relacionadas ({{
+                        tramite.lista_empresas|length }})</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Aviso</th>
+                                    <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Razón
+                                        Social</th>
+                                    <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">RUC</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for emp in tramite.lista_empresas %}
+                                <tr>
+                                    <td class="px-4 py-2 text-sm text-gray-900">{{ emp.numero_aviso }}</td>
+                                    <td class="px-4 py-2 text-sm text-gray-900 font-semibold">{{ emp.razon_social }}
+                                    </td>
+                                    <td class="px-4 py-2 text-sm text-gray-500">{{ emp.ruc }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -81,14 +153,16 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Solicitante</label>
-                        <p class="text-lg font-semibold text-gray-900">{{ tramite.nombre_solicitante_display }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{
+                            tramite.solicitante.get_full_name|default:tramite.solicitante.username }}</p>
                         <p class="text-sm text-gray-500 mt-1">{{ tramite.solicitante.get_rol_display }}</p>
                         <p class="text-xs text-gray-400 mt-1">Creado: {{ tramite.fecha_creacion|date:"d/m/Y H:i" }}</p>
                     </div>
                     {% if tramite.revisor %}
                     <div>
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Revisor</label>
-                        <p class="text-lg font-semibold text-gray-900">{{ tramite.nombre_revisor_display }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{
+                            tramite.revisor.get_full_name|default:tramite.revisor.username }}</p>
                         <p class="text-sm text-gray-500 mt-1">{{ tramite.revisor.get_rol_display }}</p>
                         <p class="text-xs text-gray-400 mt-1">Revisado: {{ tramite.fecha_revision|date:"d/m/Y H:i" }}
                         </p>
@@ -97,7 +171,8 @@
                     {% if tramite.firmante %}
                     <div>
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Firmante</label>
-                        <p class="text-lg font-semibold text-gray-900">{{ tramite.nombre_firmante_display }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{
+                            tramite.firmante.get_full_name|default:tramite.firmante.username }}</p>
                         <p class="text-sm text-gray-500 mt-1">{{ tramite.firmante.get_rol_display }}</p>
                         <p class="text-xs text-gray-400 mt-1">Firmado: {{ tramite.fecha_firma|date:"d/m/Y H:i" }}</p>
                     </div>
@@ -118,59 +193,6 @@
                 </div>
             </div>
         </div>
-
-        {% if tramite.pregunta_adicional %}
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-4">Pregunta Adicional del Solicitante</h2>
-            <div class="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
-                <div class="mb-4">
-                    <label class="text-xs font-bold text-yellow-700 uppercase tracking-wider">Pregunta</label>
-                    <p class="text-lg text-gray-800 mt-1">{{ tramite.pregunta_adicional }}</p>
-                </div>
-                {% if tramite.respuesta_pregunta %}
-                <div class="mt-4 pt-4 border-t border-yellow-200">
-                    <label class="text-xs font-bold text-green-700 uppercase tracking-wider">Respuesta (por {{
-                        tramite.nombre_revisor_display }})</label>
-                    <p class="text-lg text-gray-800 mt-1">{{ tramite.respuesta_pregunta }}</p>
-                </div>
-                {% else %}
-                <div class="mt-3">
-                    <span class="text-sm text-yellow-600 italic">⏳ Pendiente de respuesta</span>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        {% if tramite.datos_qa %}
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-4">Preguntas por Empresa</h2>
-            <div class="space-y-4">
-                {% for aviso_id, data in tramite.datos_qa.items %}
-                <div class="bg-white shadow rounded-lg border border-gray-200 p-4">
-                    <h3 class="font-bold text-gray-800 border-b pb-2 mb-3">
-                        {{ data.nombre }} <span class="text-sm font-normal text-gray-500">({{ aviso_id }})</span>
-                    </h3>
-
-                    <div class="mb-4 bg-yellow-50 p-3 rounded">
-                        <label class="text-xs font-bold text-yellow-700 uppercase tracking-wider">Pregunta</label>
-                        <p class="text-gray-800 mt-1">{{ data.pregunta }}</p>
-                    </div>
-
-                    {% if data.respuesta %}
-                    <div class="mt-3 pt-3 border-t border-gray-100">
-                        <label class="text-xs font-bold text-green-700 uppercase tracking-wider">Respuesta (por {{
-                            tramite.nombre_revisor_display }})</label>
-                        <p class="text-gray-800 mt-1">{{ data.respuesta }}</p>
-                    </div>
-                    {% else %}
-                    <div class="mt-2 text-sm text-yellow-600 italic">⏳ Pendiente de respuesta</div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
 
         {% if tramite.motivo_rechazo %}
         <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
@@ -195,38 +217,6 @@
             {% if tramite.estado == 'PENDIENTE' and user.puede_aprobar %}
             <form method="post" action="{% url 'tramites:aprobar' id=tramite.uuid %}">
                 {% csrf_token %}
-                {% if tramite.pregunta_adicional and not tramite.respuesta_pregunta %}
-                <div class="mb-4 w-full">
-                    <label for="respuesta_pregunta" class="block text-sm font-medium text-gray-700 mb-2">
-                        Respuesta a la Pregunta del Solicitante <span class="text-red-500">*</span>
-                    </label>
-                    <p class="text-sm text-gray-500 mb-2 italic">"{{ tramite.pregunta_adicional }}"</p>
-                    <textarea name="respuesta_pregunta" id="respuesta_pregunta" rows="3" required
-                        placeholder="Escriba su respuesta aquí..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
-                </div>
-                {% endif %}
-
-                {% if tramite.datos_qa %}
-                <div class="mb-4 space-y-4">
-                    {% for aviso_id, data in tramite.datos_qa.items %}
-                    {% if not data.respuesta %}
-                    <div class="p-4 bg-gray-50 border border-gray-200 rounded">
-                        <label class="block font-bold text-gray-700 mb-1">{{ data.nombre }}</label>
-                        <p class="text-sm text-gray-600 mb-2">"{{ data.pregunta }}"</p>
-                        <label for="respuesta_{{ aviso_id }}"
-                            class="block text-xs font-bold text-green-700 uppercase mb-1">
-                            Respuesta <span class="text-red-500">*</span>
-                        </label>
-                        <textarea name="respuesta_{{ aviso_id }}" id="respuesta_{{ aviso_id }}" rows="2" required
-                            placeholder="Respuesta para esta empresa..."
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"></textarea>
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-                {% endif %}
-
                 <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
                     Aprobar
                 </button>
@@ -240,7 +230,7 @@
             </a>
             {% endif %}
 
-            {% if tramite.estado == 'APROBADO' or tramite.estado == 'FIRMADO' %}
+            {% if tramite.archivo_pdf or tramite.archivo_pdf_firmado %}
             <button hx-get="{% url 'tramites:vista_previa_pdf' id=tramite.uuid %}" hx-target="body" hx-swap="beforeend"
                 class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

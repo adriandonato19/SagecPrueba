@@ -41,6 +41,11 @@ class Tramite(models.Model):
     archivo_pdf_firmado = models.FileField(upload_to='pdfs/firmados/', null=True, blank=True, help_text="PDF firmado externamente y subido por el director")
     motivo_rechazo = models.TextField(blank=True, help_text="Motivo del rechazo si aplica")
     
+    # Campo de pregunta adicional (opcional)
+    pregunta_adicional = models.TextField(blank=True, help_text="Pregunta adicional del solicitante al crear el trámite")
+    respuesta_pregunta = models.TextField(blank=True, help_text="Respuesta a la pregunta adicional, escrita por el revisor al aprobar")
+    datos_qa = models.JSONField(default=dict, blank=True, help_text="Estructura QA para múltiples empresas: {id_empresa: {nombre, pregunta, respuesta}}")
+        
     # Campos específicos para certificados oficiales
     destinatario = models.CharField(max_length=200, blank=True, help_text="Nombre del destinatario del documento (ej: Señor LUIS ABREGO)")
     proposito = models.TextField(blank=True, help_text="Propósito del trámite (ej: traspaso vehicular)")
@@ -109,16 +114,47 @@ class Tramite(models.Model):
         self.save()
 
     @property
+    def nombre_solicitante_display(self):
+        """Devuelve el nombre completo o username del solicitante de forma segura."""
+        if not self.solicitante:
+            return "N/A"
+        return self.solicitante.get_full_name() or self.solicitante.username
+
+    @property
+    def nombre_revisor_display(self):
+        """Devuelve el nombre completo o username del revisor de forma segura."""
+        if not self.revisor:
+            return "N/A"
+        return self.revisor.get_full_name() or self.revisor.username
+
+    @property
+    def nombre_firmante_display(self):
+        """Devuelve el nombre completo o username del firmante de forma segura."""
+        if not self.firmante:
+            return "N/A"
+        return self.firmante.get_full_name() or self.firmante.username
+
+    @property
     def es_multi_empresa(self):
         """Devuelve True si el snapshot es una lista de empresas."""
         return isinstance(self.empresa_snapshot, list)
         
     @property
     def empresa_principal(self):
-        """Devuelve la empresa principal para mostrar datos generales."""
+        """Devuelve la empresa principal para mostrar datos generales con campos calculados."""
+        empresa = {}
         if self.es_multi_empresa:
-            return self.empresa_snapshot[0] if self.empresa_snapshot else {}
-        return self.empresa_snapshot
+            empresa = self.empresa_snapshot[0] if self.empresa_snapshot else {}
+        else:
+            empresa = self.empresa_snapshot or {}
+            
+        # Calcular RUC para visualización (previene lógica compleja en templates)
+        # Prioridad: ruc > cedula_representante > N/A
+        ruc = empresa.get('ruc')
+        cedula = empresa.get('cedula_representante')
+        empresa['ruc_visualizar'] = ruc if ruc else (cedula if cedula else "N/A")
+        
+        return empresa
         
     @property
     def lista_empresas(self):

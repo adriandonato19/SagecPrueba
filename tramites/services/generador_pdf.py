@@ -109,49 +109,45 @@ def generar_pdf_tramite(tramite):
         todos_avisos.extend(emp.get('avisos_relacionados', []))
 
     # Determinar qué plantilla usar
-    if tramite.tipo_documento == 'CERTIFICADO':
-        template_name = 'tramites/pdf/oficio_oficial.html'
-        
-        # Generar código QR para certificados oficiales
-        # URL de validación (en producción sería una URL pública)
-        url_validacion = f"{settings.BASE_DIR}/validar/{tramite.uuid}"
-        qr_code_data = generar_qr_code(url_validacion)
-        
-        # Formatear fechas en español
-        fecha_emision_formateada = formatear_fecha_espanol(datetime.now())
-        fecha_firma_formateada = formatear_fecha_espanol(tramite.fecha_firma) if tramite.fecha_firma else fecha_emision_formateada
-        fecha_solicitud_formateada = formatear_fecha_espanol(tramite.fecha_solicitud) if tramite.fecha_solicitud else formatear_fecha_espanol(tramite.fecha_creacion)
-        
-        # Formatear fecha de inicio de operaciones de la empresa principal
-        fecha_inicio_ops = empresa_principal.get('fecha_inicio_operaciones')
-        fecha_inicio_ops_formateada = formatear_fecha_espanol(fecha_inicio_ops) if fecha_inicio_ops else ""
-        
-        # Rutas a imágenes oficiales
-        logo_path = settings.BASE_DIR / 'static' / 'img' / 'logo_oficial.png'
-        footer_path = settings.BASE_DIR / 'static' / 'img' / 'footer_certificado.png'
-        
-        context = {
-            'tramite': tramite,
-            'empresa': empresa_principal, # Compatibilidad
-            'lista_empresas': lista_empresas, # Multi
-            'avisos': todos_avisos,
-            'qr_code_data': qr_code_data,
-            'fecha_emision_formateada': fecha_emision_formateada,
-            'fecha_firma_formateada': fecha_firma_formateada,
-            'fecha_solicitud_formateada': fecha_solicitud_formateada,
-            'fecha_inicio_ops_formateada': fecha_inicio_ops_formateada,
-            'logo_path': str(logo_path),
-            'footer_path': str(footer_path),
-        }
-    else:
-        # Para oficios, usar la plantilla estándar
-        template_name = 'tramites/pdf/documento.html'
-        context = {
-            'tramite': tramite,
-            'empresa': empresa_principal,
-            'lista_empresas': lista_empresas,
-            'avisos': todos_avisos,
-        }
+    # Unificamos para usar siempre la plantilla oficial (solicitud usuario)
+    template_name = 'tramites/pdf/oficio_oficial.html'
+    
+    # Generar código QR para todos los documentos oficiales
+    # URL de validación (en producción sería una URL pública)
+    url_validacion = f"{settings.BASE_DIR}/validar/{tramite.uuid}"
+    qr_code_data = generar_qr_code(url_validacion)
+    
+    # Formatear fechas en español
+    fecha_emision_formateada = formatear_fecha_espanol(datetime.now())
+    fecha_firma_formateada = formatear_fecha_espanol(tramite.fecha_firma) if tramite.fecha_firma else fecha_emision_formateada
+    fecha_solicitud_formateada = formatear_fecha_espanol(tramite.fecha_solicitud) if tramite.fecha_solicitud else formatear_fecha_espanol(tramite.fecha_creacion)
+    
+    # Formatear fecha de inicio de operaciones de la empresa principal
+    fecha_inicio_ops = empresa_principal.get('fecha_inicio_operaciones')
+    fecha_inicio_ops_formateada = formatear_fecha_espanol(fecha_inicio_ops) if fecha_inicio_ops else ""
+    
+    # Rutas a imágenes oficiales
+    # WeasyPrint compatible con rutas Windows file URI
+    base_img_path = settings.BASE_DIR / 'static' / 'img'
+    logo_path = (base_img_path / 'logo_oficial.png').as_uri()
+    footer_path = (base_img_path / 'footer_certificado.png').as_uri()
+    
+    context = {
+        'tramite': tramite,
+        'empresa': empresa_principal, # Compatibilidad
+        'lista_empresas': lista_empresas, # Multi
+        'avisos': todos_avisos,
+        'qr_code_data': qr_code_data,
+        'fecha_emision_formateada': fecha_emision_formateada,
+        'fecha_firma_formateada': fecha_firma_formateada,
+        'fecha_solicitud_formateada': fecha_solicitud_formateada,
+        'fecha_inicio_ops_formateada': fecha_inicio_ops_formateada,
+        'logo_path': logo_path,
+        'footer_path': footer_path,
+        'pregunta_adicional': tramite.pregunta_adicional,
+        'respuesta_pregunta': tramite.respuesta_pregunta,
+        'datos_qa': tramite.datos_qa,
+    }
     
     # Renderizar plantilla HTML
     html_content = render_to_string(template_name, context)

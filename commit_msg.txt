@@ -1,0 +1,16 @@
+feat(tramites): Soporte para preguntas individuales por empresa en trámites múltiples
+
+Esta funcionalidad permite asignar y responder preguntas específicas para cada empresa al crear un procedimiento de tipo "Oficio" con múltiples entidades.
+
+Cambios clave:
+- Modelo: Se agregó `datos_qa` (JSONField) al modelo `Tramite` para almacenar datos estructurados de preguntas y respuestas por ID de empresa (RUC/Aviso).
+- Base de datos: Se creó la migración `0002_tramite_datos_qa` para aplicar los cambios de esquema.
+- Flujo de Creación:
+  - Se actualizó `crear.html` para generar dinámicamente inputs de preguntas para cada empresa seleccionada.
+  - Se modificó `crear_tramite_view` para capturar estos inputs y poblar `datos_qa`.
+- Flujo de Aprobación:
+  - Se actualizó `detalle.html` para mostrar la sección "Preguntas por Empresa" y los inputs de respuesta para el revisor.
+  - Se modificó `aprobar_view` para guardar las respuestas individuales en la estructura `datos_qa`.
+- Generación de PDF:
+  - Se actualizó `generador_pdf.py` para pasar `datos_qa` al contexto del PDF.
+  - Se mejoró `oficio_oficial.html` para iterar y renderizar el bloque de preguntas y respuestas para cada empresa.
