@@ -51,6 +51,15 @@ class Tramite(models.Model):
     proposito = models.TextField(blank=True, help_text="Propósito del trámite (ej: traspaso vehicular)")
     fecha_solicitud = models.DateField(null=True, blank=True, help_text="Fecha en que el MICI recibió la solicitud")
     
+    # Campos para Oficios de Respuesta (Ministerio Público, Juzgados, etc.)
+    oficio_entrante = models.CharField(max_length=100, blank=True, help_text="Número de Oficio entrante (ej: Oficio No. 478-2024)")
+    carpetilla = models.CharField(max_length=100, blank=True, help_text="Número de Carpetilla (ej: 202300074865)")
+    fecha_oficio_entrante = models.DateField(null=True, blank=True, help_text="Fecha del oficio entrante")
+    fecha_recepcion = models.DateField(null=True, blank=True, help_text="Fecha de recepción en el despacho")
+    solicitante_externo = models.CharField(max_length=200, blank=True, help_text="Nombre del funcionario solicitante externo (ej: Lic. Caren Cabeza)")
+    cargo_solicitante = models.CharField(max_length=200, blank=True, help_text="Cargo del solicitante externo")
+    institucion_solicitante = models.CharField(max_length=200, blank=True, help_text="Institución solicitante (ej: Ministerio Público)")
+
     # Timestamps
     fecha_creacion = models.DateTimeField(auto_now_add=True) 
     fecha_envio = models.DateTimeField(null=True, blank=True)

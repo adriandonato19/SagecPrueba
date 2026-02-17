@@ -74,12 +74,92 @@
                 <label for="tipo_documento" class="block text-sm font-medium text-gray-700 mb-2">
                     Tipo de Documento <span class="text-red-500">*</span>
                 </label>
-                <select name="tipo_documento" id="tipo_documento" required
+                <select name="tipo_documento" id="tipo_documento" required onchange="toggleOficioFields()"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     <option value="CERTIFICADO">Certificado</option>
                     <option value="OFICIO">Oficio</option>
                 </select>
             </div>
+
+            <!-- Campos específicos para OFICIO (Datos Entrantes) -->
+            <div id="campos-oficio" class="hidden bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                <h3 class="text-sm font-bold text-gray-700 uppercase mb-3 border-b pb-1">Datos del Oficio Entrante</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Oficio Entrante No.</label>
+                        <input type="text" name="oficio_entrante" placeholder="Ej: 478-2024"
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Carpetilla No.</label>
+                        <input type="text" name="carpetilla" placeholder="Ej: 202300074865"
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha del Oficio</label>
+                        <input type="date" name="fecha_oficio_entrante"
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha de Recepción</label>
+                        <input type="date" name="fecha_recepcion"
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-sm">
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Institución Solicitante</label>
+                        <input type="text" name="institucion_solicitante" placeholder="Ej: MINISTERIO PÚBLICO"
+                            list="instituciones_list"
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-sm">
+                        <datalist id="instituciones_list">
+                            <option value="MINISTERIO PÚBLICO">
+                            <option value="ÓRGANO JUDICIAL">
+                            <option value="DGI">
+                            <option value="MUNICIPIO DE PANAMÁ">
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Funcionario Solicitante</label>
+                        <input type="text" name="solicitante_externo" placeholder="Ej: Lic. Caren Cabeza"
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Cargo</label>
+                        <input type="text" name="cargo_solicitante" placeholder="Ej: Fiscal de la Sección de Delitos..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Script para manejar la visualización de campos -->
+            <script>
+                // Determinar cantidad de empresas desde el servidor
+                var cantidadEmpresas = 1;
+                {% if lista_empresas %}
+                cantidadEmpresas = {{ lista_empresas | length }};
+                {% endif %}
+
+                function toggleOficioFields() {
+                    const tipo = document.getElementById('tipo_documento').value;
+                    const camposOficio = document.getElementById('campos-oficio');
+
+                    // Solo mostrar si es OFICIO y hay MÁS de 1 empresa
+                    if (tipo === 'OFICIO' && cantidadEmpresas > 1) {
+                        camposOficio.classList.remove('hidden');
+
+                        // Habilitar campos para que sean requeridos si son visibles (opcional, pero buena práctica)
+                        // Array.from(camposOficio.querySelectorAll('input')).forEach(i => i.required = true);
+                    } else {
+                        camposOficio.classList.add('hidden');
+
+                        // Limpiar valores si se oculta para evitar envíos accidentales
+                        Array.from(camposOficio.querySelectorAll('input')).forEach(i => i.value = '');
+                    }
+                }
+                // Run on load in case of browser autofill or history back
+                document.addEventListener('DOMContentLoaded', toggleOficioFields);
+            </script>
 
             <!-- Campos para todos los documentos (Oficios y Certificados) -->
             <div id="campos-generales">
@@ -112,40 +192,51 @@
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                 </div>
 
-                {% if lista_empresas|length > 1 %}
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Preguntas por Empresa
-                        <span class="text-xs text-gray-500">(Opcional)</span>
-                    </label>
-                    <div class="space-y-4">
-                        {% for emp in lista_empresas %}
-                        {% with q_id=emp.numero_aviso|default:emp.ruc %}
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                            <label for="pregunta_{{ q_id }}" class="block text-xs font-bold text-gray-700 mb-1">
-                                {{ emp.razon_social }}
-                                <span class="text-gray-500 font-normal">- {{ q_id }}</span>
-                            </label>
-                            <textarea name="pregunta_{{ q_id }}" id="pregunta_{{ q_id }}" rows="2"
-                                placeholder="Pregunta para esta empresa..."
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
-                        </div>
-                        {% endwith %}
-                        {% endfor %}
-                    </div>
-                </div>
-                {% else %}
-                <div class="mb-4">
-                    <label for="pregunta_adicional" class="block text-sm font-medium text-gray-700 mb-2">
-                        Pregunta Adicional
-                        <span class="text-xs text-gray-500">(Opcional — Si tiene alguna consulta adicional sobre este
+                        Preguntas Adicionales
+                        <span class="text-xs text-gray-500">(Opcional — Puede agregar varias consultas sobre este
                             trámite)</span>
                     </label>
-                    <textarea name="pregunta_adicional" id="pregunta_adicional" rows="3"
-                        placeholder="Escriba su pregunta adicional aquí si la tiene..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                    <input type="hidden" name="total_preguntas" id="total_preguntas" value="1">
+                    <div id="preguntas-container" class="space-y-3">
+                        <div class="flex gap-2 items-start pregunta-row">
+                            <textarea name="pregunta_1" id="pregunta_1" rows="2"
+                                placeholder="Escriba su pregunta aquí..."
+                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-agregar-pregunta"
+                        class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        Agregar otra pregunta
+                    </button>
                 </div>
-                {% endif %}
+
+                <script>
+                    (function () {
+                        let counter = 1;
+                        document.getElementById('btn-agregar-pregunta').addEventListener('click', function () {
+                            counter++;
+                            document.getElementById('total_preguntas').value = counter;
+                            const container = document.getElementById('preguntas-container');
+                            const row = document.createElement('div');
+                            row.className = 'flex gap-2 items-start pregunta-row';
+                            row.innerHTML = `
+                            <textarea name="pregunta_${counter}" id="pregunta_${counter}" rows="2"
+                                placeholder="Escriba su pregunta aquí..."
+                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                            <button type="button" onclick="this.parentElement.remove()" 
+                                class="text-red-400 hover:text-red-600 mt-2" title="Quitar pregunta">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>`;
+                            container.appendChild(row);
+                        });
+                    })();
+                </script>
             </div>
 
             <div class="flex gap-4 mt-6">

@@ -103,10 +103,43 @@ def generar_pdf_tramite(tramite):
     # Empresa principal (para datos singulares)
     empresa_principal = lista_empresas[0] if lista_empresas else {}
     
-    # Recolectar todos los avisos de todas las empresas
-    todos_avisos = []
+    # Limpiar y deduplicar avisos dentro de cada empresa en lista_empresas
+    # Esto es necesario para que el loop en el template por empresa no muestre duplicados
+    lista_empresas_clean = []
     for emp in lista_empresas:
-        todos_avisos.extend(emp.get('avisos_relacionados', []))
+        # Copiar para no modificar el original si fuera mutable (aunque viene de JSON)
+        emp_clean = emp.copy()
+        raw_avisos = emp.get('avisos_relacionados', [])
+        clean_avisos = []
+        seen_navs = set()
+        for a in raw_avisos:
+            nav = a.get('numero_aviso', '')
+            if nav and nav not in seen_navs:
+                seen_navs.add(nav)
+                clean_avisos.append(a)
+            elif not nav:
+                clean_avisos.append(a)
+        emp_clean['avisos_relacionados'] = clean_avisos
+        lista_empresas_clean.append(emp_clean)
+    
+    # Reemplazar la lista original con la limpia para el contexto
+    lista_empresas = lista_empresas_clean
+
+    # Recolectar todos los avisos de todas las empresas (sin duplicados)
+    todos_avisos_raw = []
+    for emp in lista_empresas:
+        todos_avisos_raw.extend(emp.get('avisos_relacionados', []))
+    
+    # Deduplicar por numero_aviso
+    seen_avisos = set()
+    todos_avisos = []
+    for aviso in todos_avisos_raw:
+        nav = aviso.get('numero_aviso', '')
+        if nav and nav not in seen_avisos:
+            seen_avisos.add(nav)
+            todos_avisos.append(aviso)
+        elif not nav:
+            todos_avisos.append(aviso)
 
     # Determinar qué plantilla usar
     # Unificamos para usar siempre la plantilla oficial (solicitud usuario)
@@ -132,6 +165,25 @@ def generar_pdf_tramite(tramite):
     logo_path = (base_img_path / 'logo_oficial.png').as_uri()
     footer_path = (base_img_path / 'footer_certificado.png').as_uri()
     
+    # Pre-computar valores que el auto-formatter rompe en el template
+    anio_creacion = tramite.fecha_creacion.strftime('%Y') if tramite.fecha_creacion else ''
+    ref_num = tramite.numero_referencia or 'XXX'
+    referencia_completa = f"MICI-DGCI-AL-N-N°-[{ref_num}]-{anio_creacion}"
+    
+    # Extraer nombre para saludo
+    destinatario = tramite.destinatario or 'Destinatario'
+    # Simular el filtro extraer_nombre_destinatario: tomar la parte después de "Señor" u otra cortesía
+    nombre_saludo = destinatario
+    for prefijo in ['Señor ', 'Señora ', 'Sr. ', 'Sra. ', 'Licenciado ', 'Licenciada ']:
+        if destinatario.upper().startswith(prefijo.upper()):
+            nombre_saludo = destinatario[len(prefijo):]
+            break
+    nombre_saludo = nombre_saludo[:30]
+    
+    # Formatear fechas adicionales
+    fecha_oficio_entrante_formateada = formatear_fecha_espanol(tramite.fecha_oficio_entrante) if tramite.fecha_oficio_entrante else ""
+    fecha_recepcion_formateada = formatear_fecha_espanol(tramite.fecha_recepcion) if tramite.fecha_recepcion else ""
+    
     context = {
         'tramite': tramite,
         'empresa': empresa_principal, # Compatibilidad
@@ -142,11 +194,17 @@ def generar_pdf_tramite(tramite):
         'fecha_firma_formateada': fecha_firma_formateada,
         'fecha_solicitud_formateada': fecha_solicitud_formateada,
         'fecha_inicio_ops_formateada': fecha_inicio_ops_formateada,
+        # Nuevas fechas formatadas
+        'fecha_oficio_entrante_formateada': fecha_oficio_entrante_formateada,
+        'fecha_recepcion_formateada': fecha_recepcion_formateada,
+        
         'logo_path': logo_path,
         'footer_path': footer_path,
         'pregunta_adicional': tramite.pregunta_adicional,
         'respuesta_pregunta': tramite.respuesta_pregunta,
         'datos_qa': tramite.datos_qa,
+        'referencia_completa': referencia_completa,
+        'saludo_nombre': nombre_saludo,
     }
     
     # Renderizar plantilla HTML

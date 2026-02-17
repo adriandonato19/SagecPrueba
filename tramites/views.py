@@ -156,13 +156,10 @@ def crear_tramite_view(request):
                                     ruc = '-'.join(parts[:3])
                             log_debug(f"DEBUG POST: RUC extraído del aviso: {ruc}")
                         
-                        # Encontrar todos los avisos que pertenezcan al mismo RUC
-                        ruc_obj = aviso.get('ruc') or ruc
-                        avisos_relacionados = [a for a in avisos_session if (a.get('ruc') or '').startswith(ruc) or ruc in str(a.get('numero_aviso', ''))]
-                        
+                        # Solo incluir el aviso seleccionado (no todos los del mismo RUC)
                         resultado = {
                             'detalle': aviso,
-                            'avisos': avisos_relacionados if avisos_relacionados else [aviso]
+                            'avisos': [aviso]
                         }
                         log_debug(f"DEBUG POST: ENCONTRADO en sesión! {len(resultado['avisos'])} avisos vinculados.")
                         break
@@ -180,18 +177,29 @@ def crear_tramite_view(request):
                 return redirect('integracion:buscador')
         
         # Parsear fecha de solicitud (soportar múltiples formatos)
-        fecha_solicitud = None
-        if fecha_solicitud_str:
-            from datetime import datetime
-            # Formatos posibles: HTML5 (YYYY-MM-DD), Español (DD/MM/YYYY), Español con guiones
-            formatos = ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']
+        from datetime import datetime
+        formatos = ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']
+        
+        def parsear_fecha(fecha_str):
+            if not fecha_str: return None
             for fmt in formatos:
                 try:
-                    fecha_solicitud = datetime.strptime(fecha_solicitud_str, fmt).date()
-                    break
+                    return datetime.strptime(fecha_str, fmt).date()
                 except ValueError:
                     continue
+            return None
+
+        fecha_solicitud = parsear_fecha(fecha_solicitud_str)
+        fecha_oficio_entrante = parsear_fecha(request.POST.get('fecha_oficio_entrante', ''))
+        fecha_recepcion = parsear_fecha(request.POST.get('fecha_recepcion', ''))
         
+        # Datos del Oficio Entrante
+        oficio_entrante = request.POST.get('oficio_entrante', '').strip()
+        carpetilla = request.POST.get('carpetilla', '').strip()
+        solicitante_externo = request.POST.get('solicitante_externo', '').strip()
+        cargo_solicitante = request.POST.get('cargo_solicitante', '').strip()
+        institucion_solicitante = request.POST.get('institucion_solicitante', '').strip()
+
         # Preparar snapshot con avisos
         if isinstance(resultado, list):
             # Modo Selección Múltiple: El snapshot es la lista completa
@@ -201,24 +209,27 @@ def crear_tramite_view(request):
             snapshot = resultado['detalle'].copy()
             snapshot['avisos_relacionados'] = resultado['avisos']
         
-        # Recopilar preguntas adicionales por empresa si es múltiple
-        datos_qa = {}
-        if isinstance(resultado, list):
-            for emp in resultado:
-                # Usar numero_aviso como clave única, fallback a RUC
-                aviso_id = str(emp.get('numero_aviso') or emp.get('ruc') or 'N/A')
-                # En el formulario usaremos name="pregunta_{aviso_id}"
-                # Sanear el ID para usarlo como clave de campo HTML si es necesario (ej: quitando espacios)
-                # Pero aquí asumimos que el template enviará con la clave correcta
-                pregunta_key = f"pregunta_{aviso_id}"
-                pregunta_individual = request.POST.get(pregunta_key, '').strip()
-                
-                if pregunta_individual:
-                    datos_qa[aviso_id] = {
-                        'nombre': emp.get('razon_social', 'Empresa'),
-                        'pregunta': pregunta_individual,
-                        'respuesta': ''
-                    }
+        # Recopilar preguntas adicionales (lista general, no por empresa)
+        datos_qa = []
+        try:
+            total_preguntas = int(request.POST.get('total_preguntas', '0'))
+        except (ValueError, TypeError):
+            total_preguntas = 0
+        
+        for i in range(1, total_preguntas + 1):
+            pregunta_text = request.POST.get(f'pregunta_{i}', '').strip()
+            if pregunta_text:
+                datos_qa.append({
+                    'pregunta': pregunta_text,
+                    'respuesta': ''
+                })
+        
+        # Retrocompatibilidad: si viene pregunta_adicional (campo viejo), agregarla también
+        if pregunta_adicional and not datos_qa:
+            datos_qa.append({
+                'pregunta': pregunta_adicional,
+                'respuesta': ''
+            })
         
         # Crear trámite
         tramite = Tramite.objects.create(
@@ -231,6 +242,15 @@ def crear_tramite_view(request):
             destinatario=destinatario,
             proposito=proposito,
             fecha_solicitud=fecha_solicitud,
+            # Nuevos campos
+            oficio_entrante=oficio_entrante,
+            carpetilla=carpetilla,
+            fecha_oficio_entrante=fecha_oficio_entrante,
+            fecha_recepcion=fecha_recepcion,
+            solicitante_externo=solicitante_externo,
+            cargo_solicitante=cargo_solicitante,
+            institucion_solicitante=institucion_solicitante,
+            
             pregunta_adicional=pregunta_adicional,
             datos_qa=datos_qa
         )
@@ -411,8 +431,20 @@ def detalle_view(request, id):
             messages.error(request, 'No puede enviar este trámite.')
         return redirect('tramites:detalle', id=tramite.uuid)
     
+    # Pre-enumerar preguntas QA para evitar dependencia de forloop.counter en templates
+    datos_qa_enum = []
+    if tramite.datos_qa and isinstance(tramite.datos_qa, list):
+        for idx, item in enumerate(tramite.datos_qa):
+            datos_qa_enum.append({
+                'titulo': f'Pregunta {idx + 1}',
+                'indice': str(idx),
+                'pregunta': item.get('pregunta', ''),
+                'respuesta': item.get('respuesta', ''),
+            })
+    
     return render(request, 'tramites/detalle.html', {
-        'tramite': tramite
+        'tramite': tramite,
+        'datos_qa_enum': datos_qa_enum,
     })
 
 
@@ -436,16 +468,14 @@ def aprobar_view(request, id):
             tramite.respuesta_pregunta = respuesta_pregunta
             tramite.save(update_fields=['respuesta_pregunta'])
             
-        # Guardar respuestas a preguntas múltiples (Multi)
-        if tramite.datos_qa:
+        # Guardar respuestas a preguntas múltiples (Lista)
+        if tramite.datos_qa and isinstance(tramite.datos_qa, list):
             updated_qa = False
-            # Iterar sobre una copia o directamente, datos_qa es un dict
-            for aviso_id, data in tramite.datos_qa.items():
-                respuesta_key = f"respuesta_{aviso_id}"
+            for idx, item in enumerate(tramite.datos_qa):
+                respuesta_key = f"respuesta_{idx}"
                 respuesta = request.POST.get(respuesta_key, '').strip()
-                # Solo actualizar si viene respuesta (el frontend lo marca required si estaba vacío)
                 if respuesta:
-                    data['respuesta'] = respuesta
+                    item['respuesta'] = respuesta
                     updated_qa = True
             
             if updated_qa:
@@ -587,9 +617,9 @@ def descargar_view(request, id):
         raise Http404
     
     # Permitir descarga si el PDF existe (se genera al crear el trámite)
-    if not tramite.archivo_pdf or not tramite.archivo_pdf.name:
-        messages.error(request, 'El PDF aún no está disponible.')
-        return redirect('tramites:detalle', id=tramite.uuid)
+    # Validar que si es un trámite que requiere firma y no está firmado, se intente generar
+    # if not tramite.archivo_pdf ... (Eliminado para permitir regeneración)
+    pass
     
     # Determinar qué PDF servir: firmado si existe, sino el original
     try:
@@ -676,7 +706,24 @@ def vista_previa_pdf_hx(request, id):
     )
     
     if not tiene_pdf:
-        return HttpResponse('<div class="p-4 text-yellow-600">El PDF aún no está disponible. Por favor, intente más tarde.</div>', status=400)
+        # Intentar regenerar
+        try:
+            pdf_bytesio = generar_pdf_tramite(tramite)
+            pdf_content = pdf_bytesio.read()
+            
+            temp_pdf_dir = Path(__file__).parent / 'temp_pdfs'
+            temp_pdf_dir.mkdir(exist_ok=True)
+            
+            pdf_filename = f'tramite_{tramite.uuid}.pdf'
+            pdf_path = temp_pdf_dir / pdf_filename
+            
+            with open(pdf_path, 'wb') as f:
+                f.write(pdf_content)
+            
+            tramite.archivo_pdf.name = f'temp_pdfs/{pdf_filename}'
+            tramite.save(update_fields=['archivo_pdf'])
+        except Exception as e:
+            return HttpResponse(f'<div class="p-4 text-red-600">Error al generar PDF: {str(e)}</div>', status=500)
     
     return render(request, 'tramites/partials/modal_vista_previa_pdf.html', {
         'tramite': tramite
