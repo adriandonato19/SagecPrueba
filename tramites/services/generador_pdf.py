@@ -12,6 +12,7 @@ import hashlib
 import qrcode
 import base64
 from datetime import datetime
+from identidad.models import UsuarioMICI
 
 
 def formatear_fecha_espanol(fecha):
@@ -184,6 +185,30 @@ def generar_pdf_tramite(tramite):
     fecha_oficio_entrante_formateada = formatear_fecha_espanol(tramite.fecha_oficio_entrante) if tramite.fecha_oficio_entrante else ""
     fecha_recepcion_formateada = formatear_fecha_espanol(tramite.fecha_recepcion) if tramite.fecha_recepcion else ""
     
+    # Pre-construir el párrafo introductorio para evitar que el auto-formatter
+    # de VS Code rompa las etiquetas Django en la plantilla
+    parrafo_intro_html = ""
+    if tramite.oficio_entrante:
+        partes = [f'En atención al <strong>{tramite.oficio_entrante}</strong>']
+        if tramite.carpetilla:
+            partes.append(f', <strong>Carpeta No. {tramite.carpetilla}</strong>')
+        if fecha_oficio_entrante_formateada:
+            partes.append(f' con fecha del {fecha_oficio_entrante_formateada},')
+        if fecha_recepcion_formateada:
+            partes.append(f' y recibido en nuestro despacho el {fecha_recepcion_formateada},')
+        nombre_emp = lista_empresas[0].get('razon_social', '') if lista_empresas else ''
+        partes.append(
+            f' suscrito por su persona mediante la cual nos solicita se le informe'
+            f' si existe registro de algún Aviso de Operación a nombre de'
+            f' <strong>{nombre_emp}</strong>,'
+            f' por lo cual, en tal sentido tenemos a bien manifestarle lo siguiente:'
+        )
+        parrafo_intro_html = ''.join(partes)
+    
+    # Obtener el Director General (role='DIRECTOR')
+    # Este usuario es quien debe aparecer en la firma por defecto
+    director_general = UsuarioMICI.objects.filter(rol=UsuarioMICI.DIRECTOR).first()
+
     context = {
         'tramite': tramite,
         'empresa': empresa_principal, # Compatibilidad
@@ -200,11 +225,13 @@ def generar_pdf_tramite(tramite):
         
         'logo_path': logo_path,
         'footer_path': footer_path,
+        'director_general': director_general, # Added director general to context
         'pregunta_adicional': tramite.pregunta_adicional,
         'respuesta_pregunta': tramite.respuesta_pregunta,
         'datos_qa': tramite.datos_qa,
         'referencia_completa': referencia_completa,
         'saludo_nombre': nombre_saludo,
+        'parrafo_intro_html': parrafo_intro_html,
     }
     
     # Renderizar plantilla HTML

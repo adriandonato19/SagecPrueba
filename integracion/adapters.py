@@ -6,6 +6,33 @@ $Reusable$
 from typing import Dict, List, Optional
 
 
+
+def construir_ubicacion_completa(datos: Dict) -> str:
+    """
+    Construye la dirección completa concatenando campos de ubicación.
+    """
+    partes = []
+    
+    if datos.get('provincia'):
+        partes.append(datos['provincia'])
+    if datos.get('distrito'):
+        partes.append(datos['distrito'])
+    if datos.get('corregimiento'):
+        partes.append(datos['corregimiento'])
+    if datos.get('urbanizacion'):
+        partes.append(f"Urb. {datos['urbanizacion']}")
+    if datos.get('calle'):
+        partes.append(f"Calle {datos['calle']}")
+    if datos.get('casa'):
+        partes.append(f"Casa {datos['casa']}")
+    if datos.get('edificio'):
+        partes.append(f"Edif. {datos['edificio']}")
+    if datos.get('apartamento'):
+        partes.append(f"Apto. {datos['apartamento']}")
+    
+    return ', '.join(filter(None, partes)) if partes else 'No especificada'
+
+
 def normalizar_datos_empresa(datos_api: Dict) -> Dict:
     """
     Normaliza los datos de la API de Panamá Emprende a formato interno.
@@ -50,7 +77,7 @@ def normalizar_datos_empresa(datos_api: Dict) -> Dict:
     # Capital no necesita encoding fix si es numérico, pero por si acaso viene como string sucio
     capital = datos_api.get('capital_invertido') or datos_api.get('monto_estimado', 0.00)
 
-    return {
+    normalized = {
         'ruc': ruc_raw,
         'dv': dv,
         'ruc_completo': ruc_completo,
@@ -76,32 +103,11 @@ def normalizar_datos_empresa(datos_api: Dict) -> Dict:
         'sucursal': _fix_encoding(datos_api.get('sucursal', '000')),
         'tipo_apireal': True if 'nombreComercial' in datos_api else False # Flag interno
     }
-
-
-def construir_ubicacion_completa(datos: Dict) -> str:
-    """
-    Construye la dirección completa concatenando campos de ubicación.
-    """
-    partes = []
     
-    if datos.get('provincia'):
-        partes.append(datos['provincia'])
-    if datos.get('distrito'):
-        partes.append(datos['distrito'])
-    if datos.get('corregimiento'):
-        partes.append(datos['corregimiento'])
-    if datos.get('urbanizacion'):
-        partes.append(f"Urb. {datos['urbanizacion']}")
-    if datos.get('calle'):
-        partes.append(f"Calle {datos['calle']}")
-    if datos.get('casa'):
-        partes.append(f"Casa {datos['casa']}")
-    if datos.get('edificio'):
-        partes.append(f"Edif. {datos['edificio']}")
-    if datos.get('apartamento'):
-        partes.append(f"Apto. {datos['apartamento']}")
+    # Generar ubicación completa automáticamente
+    normalized['ubicacion_completa'] = construir_ubicacion_completa(normalized)
     
-    return ', '.join(filter(None, partes)) if partes else 'No especificada'
+    return normalized
 
 
 def normalizar_lista_avisos(avisos_api: List[Dict]) -> List[Dict]:

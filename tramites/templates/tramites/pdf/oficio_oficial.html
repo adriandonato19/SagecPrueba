@@ -283,18 +283,9 @@
 
             <!-- Párrafo Introductorio Dinámico -->
             <div class="parrafo mb-4">
-                {% if tramite.oficio_entrante and lista_empresas|length > 1 %}
+                {% if tramite.oficio_entrante %}
                 <!-- Layout NUEVO (Oficio Multi-Empresa / Solicitud Oficial) -->
-                <p>
-                    En atención al <strong>{{ tramite.oficio_entrante }}</strong>{% if tramite.carpetilla %} Carpetilla
-                    No. <strong>{{ tramite.carpetilla }}</strong>,{% endif %}{% if tramite.fecha_oficio_entrante %} con
-                    fecha {{ fecha_oficio_entrante_formateada }},{% endif %}{% if tramite.fecha_recepcion %} recibida en
-                    nuestro Despacho el {{ fecha_recepcion_formateada }},{% endif %} suscrito por su persona, mediante
-                    la cual nos solicita certificación de persona jurídica, así como los registros inscritos, Aviso de
-                    Operaciones y no inscritos de las sociedades {% for emp in lista_empresas %}<strong>{{
-                        emp.razon_social }}</strong>{% if not forloop.last %} - {% endif %}{% endfor %}, por lo cual,
-                    tenemos a bien informarle lo siguiente:
-                </p>
+                <p>{{ parrafo_intro_html|safe }}</p>
 
                 <div class="parrafo mb-6 mt-4">
                     <p>
@@ -302,7 +293,9 @@
                         agiliza el proceso de apertura de empresas y establece otras disposiciones, luego de la revisión
                         correspondiente a nuestros archivos, <a href="www.panamaemprende.gob.pa"
                             class="text-blue-600 underline">www.panamaemprende.gob.pa</a> del Ministerio de Comercio e
-                        Industrias, podemos indicar lo siguiente en relación con los datos proporcionados:
+                        Industrias, podemos <strong>Certificar</strong> que <strong>CONSTA</strong> registro de la
+                        siguiente persona en relación con los
+                        datos proporcionados:
                     </p>
                 </div>
 
@@ -310,26 +303,30 @@
                 <div class="datos-empresas">
                     {% for empresa in lista_empresas %}
                     <div class="empresa-item mb-6" style="page-break-inside: avoid;">
-                        <p class="font-bold uppercase mb-2">{{ empresa.razon_social }}:</p>
+                        <p class="font-bold uppercase mb-4">{{ empresa.razon_social }}</p>
 
                         {% if empresa.avisos_relacionados %}
-                        <div class="lista-avisos ml-4">
+                        <ul class="list-disc ml-8 space-y-4">
                             {% for aviso in empresa.avisos_relacionados %}
-                            <div class="aviso-item mb-2 text-sm flex items-start">
-                                <span class="mr-2 pt-1 inline-block" style="font-size: 1.2em;">✓</span>
-                                <div class="contenido-aviso text-justify">
-                                    <strong>Aviso de Operación: {{ aviso.numero_aviso }}</strong>,
-                                    Razón Comercial: {{ aviso.nombre_comercial }},
-                                    Representante Legal: {{ aviso.nombre_representante }},
-                                    Razón Social: {{ aviso.razon_social }},
-                                    RUC: {{ aviso.ruc_completo|default:aviso.ruc }},
-                                    Fecha de Inicio de Operaciones: {{ aviso.fecha_inicio_operaciones }},
-                                    Dirección del Establecimiento: {{ aviso.direccion }},
-                                    Estatus: {{ aviso.estado|default:"Vigente" }}.
-                                </div>
-                            </div>
+                            <li class="pl-2 text-justify">
+                                Aviso de Operación: <strong>{{ aviso.numero_aviso }}</strong>,
+                                Razón Comercial: <strong>{{ aviso.nombre_comercial }}</strong>,
+                                Representante Legal: <strong>{{ aviso.nombre_representante }}</strong>,
+                                Razón Social: <strong>{{ aviso.razon_social }}</strong>,
+                                RUC: <strong>{{ aviso.ruc_completo|default:aviso.ruc }}</strong>,
+                                DV: <strong>{{ aviso.dv|default:"" }}</strong>,
+                                Fecha de Inicio de Operaciones: <strong>{{ aviso.fecha_inicio_operaciones }}</strong>,
+                                Estatus: <strong>{{ aviso.estado|default:"Vigente" }}</strong>.
+                                {% if aviso.estado == "En Solicitud" %}
+                                Es importante señalar que el estatus “En Solicitud” obedece a que nunca fue concluido el
+                                trámite en el sistema <a href="www.panamaemprende.gob.pa"
+                                    class="text-blue-600 underline">www.panamaemprende.gob.pa</a> por lo tanto, no
+                                cuenta con un consecutivo en el Aviso de operación y no cuenta con el pago del derecho
+                                único del Aviso.
+                                {% endif %}
+                            </li>
                             {% endfor %}
-                        </div>
+                        </ul>
                         {% else %}
                         <div class="ml-4 italic text-gray-600 mb-2">
                             <span class="mr-2">✓</span> No se encontraron Avisos de Operación relacionados.
@@ -346,8 +343,7 @@
                     <strong>{{ fecha_solicitud_formateada }}</strong>, en la cual solicita información
                     relacionada al Aviso de Operaciones <strong>{{ empresa.numero_aviso|default:"---" }}</strong>,
                     bajo la razón social <strong>{{ empresa.razon_social|default:"---" }}</strong>,
-                    Razón Comercial <strong>{{ empresa.nombre_comercial|default:empresa.razon_comercial|default:"---"
-                        }}</strong> y
+                    Razón Comercial <strong>{{ empresa.razon_comercial|default:"---" }}</strong> y
                     número de Licencia <strong>{{ empresa.numero_licencia|default:"---" }}</strong>,
                     para un trámite de <strong>{{ tramite.proposito|default:"---" }}</strong>,
                     tenemos a bien manifestar lo siguiente:
@@ -360,15 +356,12 @@
                     que <span class="font-bold uppercase">CONSTA</span> registro del Aviso de Operación:
                     <strong>{{ empresa.numero_aviso|default:"---" }}</strong>,
                     Número de Licencia: <strong>{{ empresa.numero_licencia|default:"---" }}</strong>,
-                    Razón Comercial: <strong>{{ empresa.nombre_comercial|default:empresa.razon_comercial|default:"---"
-                        }}</strong>,
-                    Representante Legal: <strong>{{
-                        empresa.representante_legal|default:empresa.nombre_representante|default:"---" }}</strong>,
+                    Razón Comercial: <strong>{{ empresa.razon_comercial|default:"---" }}</strong>,
+                    Representante Legal: <strong>{{ empresa.representante_legal|default:"---" }}</strong>,
                     Razón Social: <strong>{{ empresa.razon_social|default:"---" }}</strong>,
                     RUC: <strong>{{ empresa.ruc_completo|default:"---" }}</strong>,
                     Fecha de Inicio de Operaciones: <strong>{{ fecha_inicio_ops_formateada|default:"---" }}</strong>,
-                    Dirección del Establecimiento: <strong>{{
-                        empresa.ubicacion_completa|default:empresa.direccion|default:"---" }}</strong>,
+                    Dirección del Establecimiento: <strong>{{ empresa.ubicacion_completa|default:"---" }}</strong>,
                     estatus <strong>{{ empresa.estatus|default:"Vigente" }}</strong>.
                 </p>
 
@@ -410,6 +403,8 @@
                 <div class="firma-nombre font-bold uppercase">
                     {% if tramite.firmante %}
                     {{ tramite.firmante.get_full_name|default:tramite.firmante.username }}
+                    {% elif director_general %}
+                    {{ director_general.get_full_name|default:director_general.username }}
                     {% else %}
                     LIC. VIRGILIO A. SOUSA VALDÉS
                     {% endif %}
